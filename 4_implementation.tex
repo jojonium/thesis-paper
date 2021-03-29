@@ -1,20 +1,115 @@
-\section{Implementation}
+\section{Approach and Implementation}
 \label{sec:implementation}
 
-\textsc{Appjudicator} is a complex application with disparate components that
-must run simultaneously and communicate with each other properly. The app can be
-broadly broken down into three main components: the accessibility service, which
-implements Android's \texttt{AccessibilityService}
-API~\cite{googledevelopers2020}; the local VPN server, which implements
-Android's \texttt{VpnService} API~\cite{googledevelopers2020vpn}; and the
-host-based SDN agent, which implements a subset of the OpenFlow 1.0
-standard~\cite{mckeown2008}.
+\textsc{Appjudicator} works by analyzing network flows with the added context of
+UI interaction data. It uses this information as part of a host-based
+software-defined networking (SDN) agent to make decisions about whether to allow
+or block individual flows. The app is made up of three primary components:
+\begin{enumerate*}[label=(\arabic*)]
+	\item a VPN service that captures and analyzes network flows from the
+		device,
+	\item an accessibility service that monitors user interactions with the
+		UI, and
+	\item an SDN agent that implements a subset of the OpenFlow 1.0
+		specification~\cite{openflowspec}.
+\end{enumerate*}
 
 The app is implemented using Kotlin, an object-oriented programming language
 that is interoperable with Java and compiles to Java Virtual Machine bytecode.
 This is Google's preferred language for Android development, and makes some
 tasks like null-checking and concurrency easier than they would be in
 Java~\cite{lardinois2019}.
+
+The VPN service implements Android's \texttt{VpnService}
+API~\cite{googledevelopers2020vpn}, but connects to a packet-capturing class
+running on the same phone rather than a remote server. The UI-monitoring
+component implements Android's \texttt{AccessibilityService}
+API~\cite{googledevelopers2020}, and the SDN agent implements a subset of the
+OpenFlow 1.0 switch standard~\cite{mckeown2008}. Each of these components work
+together to correlate network flows with a UI interaction (or lack thereof) that
+initiated them, and elevate suspicious flows to the SDN controller. We now
+describe each of these components and explain how they work together.
+
+\subsection{VPN Service}
+\label{sec:implementation-vpn-service}
+
+The networking component of \textsc{Appjudicator} utilizes Android's built-in
+API for redirecting network traffic, the
+\texttt{VpnService}~\cite{googledevelopers2020vpn}. However, instead of
+connecting to a remote VPN server we connect to a simple server running locally
+on the device. We register a new VPN connection using this API and prompt the
+user to connect to it. This routes all the device's traffic through our service,
+which captures and logs packets before forwarding them along to their
+destination.
+
+Once activated, the VPN service runs in the background and receives packets from
+the operating system through a \texttt{ParcelFileDescriptor} instance that can
+be used to read and write packets from the network interface's
+buffer~\cite{vpnguide}.  Normally, a VPN service would forward packets through a
+tunnel to a remote VPN server, but \textsc{Appjudicator}'s VPN server runs
+locally on the device.  Packets are instead passed to processes running on other
+threads that log the packets and forward them along to their destination using
+Java sockets.
+
+It is normally the app's responsibility to encrypt data being transferred to the
+VPN gateway~\cite{vpnguide}, but this is unnecessary in \textsc{Appjudicator}
+because both client and server are running on the same device. We benefit from
+lower latency from not having to spend any resources encrypting and decrypting
+packets.
+
+\subsubsection{Deconstructing Flows}
+\label{sec:deconstructing-flows}
+
+Captured packets are parsed, logged, and reconstructed by the VPN service using
+Pcap4J, a third-party Java IP packet library~\cite{kaito2016}. Source and
+destination IP addresses are collected from the packet's IP header, along with
+source and destination ports from the TCP or UDP header. \textsc{Appjudicator}
+currently only supports IPv4, so any intercepted IPv6 packets are simply
+dropped. Likewise, packets with unknown transport-layer protocols
+(\textit{i.e.}, neither TCP nor UDP) are dropped. The network context provided
+by the VPN service includes IP source and destination addresses, protocol,
+source and destination ports, payload size, initiating application, and full
+packet payload, all of which can be used to enforce fine-grained SDN rules.
+
+% TODO explain how to link flows to PIDs
+
+Packets are organized by flow, essentially a communication channel between one
+application and another. A flow is defined as a sequence of packets with the
+same source address, source port, destination address, destination port, and
+transport layer protocol (either TCP or UDP). Packets are stored in queues by
+flow while awaiting a response from the SDN agent. These queues are stored in a
+has map, indexed by the concatenation of the flow's addresses, ports, and
+protocol. When the SDN agent reaches a decision, the VPN service looks up the
+flow and either forwards all queued packets in order or drops them.
+
+\subsubsection{Multithreading}
+\label{sec:multithreading}
+
+Network connections are performance-critical, so we need to ensure that the user
+experience is not blocked waiting for \textsc{Appjudicator} to process network
+requests. All network processing is performed off of the main thread using
+Kotlin's concurrency framework. This allows the VPN service to have a minimal
+impact on performance.
+
+\subsubsection{Permissions and Security}
+\label{sec:vpn-permissions}
+
+For the VPN service to work, \textsc{Appjudicator} must request the
+\texttt{INTERNET} permission and declare a service that requests the
+\texttt{BIND\_VPN\_SERVICE} permission in the Android manifest. It must also
+name a route to capture traffic from. We use \texttt{0.0.0.0/0} to capture all
+IPv4 traffic, but this could be changed so the VPN is only used on traffic of a
+particular interface or subnet.
+
+After the app is installed, the VPN service can be started or stopped directly
+from it. \textsc{Appjudicator} provides simple buttons to do this, or it can be
+configured to connect to the VPN automatically on startup. The service can also
+be stopped or disabled from Android's settings menu for security reasons.
+
+There is one kind of traffic we never want to block: communications between the
+SDN agent and controller. These values must be specified in the app's
+configuration, so the VPN service is programmed to always allow TCP packets
+going to the controller's IP and port.
 
 \subsection{Accessibility Service}
 \label{sec:implementation-accessibility-service}
@@ -120,71 +215,6 @@ individually manually enabled and each display a persistent notification
 reminding the user that the service is still running in the background.
 
 % TODO include screenshot of permissions warning
-
-\subsection{VPN Service}
-\label{sec:implementation-vpn-service}
-
-In order to capture network context, we connect to a VPN server running locally
-on the device using Android's \texttt{VpnService} API. We register a new VPN
-connection using this API and prompt the user to connect to it. This routes all
-the device's traffic through our service, which captures and logs packets before
-forwarding them along to their destination.
-
-The VPN service provides a \texttt{ParcelFileDescriptor} instance that can be
-used to read and write packets from the interface's buffer~\cite{vpnguide}.
-Normally, a VPN service would forward packets through a tunnel to a remote VPN
-server, but \textsc{Appjudicator}'s VPN server runs locally on the device.
-Packets are instead passed to processes running on other threads that log the
-packets and forward them along to their destination.
-
-% TODO write about how there's no encryption/decryption (get a citation)
-
-\subsubsection{Deconstructing Flows}
-\label{sec:deconstructing-flows}
-
-Captured packets are parsed, logged, and reconstructed by the VPN service using
-Pcap4J, a third-party Java IP packet library~\cite{kaito2016}. Source and
-destination IP addresses are collected from the packet's IP header, along with
-source and destination ports from the TCP or UDP header. \textsc{Appjudicator}
-currently only supports IPv4, so any intercepted IPv6 packets are simply
-dropped. Likewise, packets with unknown transport-layer protocols
-(\textit{i.e.}, neither TCP nor UDP) are dropped.
-
-% TODO explain how to link flows to PIDs and queue packets in a flow once I
-% figure out how to do that
-
-Packets are stored in a hash map indexed by the concatenation of source address,
-source port, destination address, destination port, and protocol (either TCP or
-UDP). Sequences of packets with identical values for each of these fields are
-considered to be part of the same network flow. This system makes it easy to
-look up all the packets belonging to a particular flow.
-
-\subsubsection{Multithreading}
-\label{sec:multithreading}
-
-Network connections are performance-critical, so we need to ensure that the user
-experience is not blocked waiting for \textsc{Appjudicator} to process network
-requests. All network processing is performed off of the main thread using
-Kotlin's concurrency framework. This allows the VPN service to have a minimal
-impact on performance.
-
-\subsubsection{Permissions and Security}
-\label{sec:vpn-permissions}
-
-For the VPN service to work, \textsc{Appjudicator} must request the
-\texttt{INTERNET} permission and declare a service that requests the
-\texttt{BIND\_VPN\_SERVICE} permission in the Android manifest. It must also
-name a route to capture traffic from. We use \texttt{0.0.0.0/0} to capture all
-IPv4 traffic, but this could be changed so the VPN is only used on traffic of a
-particular interface or subnet.
-
-After the app is installed, the VPN service can be started or stopped directly
-from it. \textsc{Appjudicator} provides simple buttons to do this, or it can be
-configured to connect to the VPN automatically on startup. The service can also
-be stopped or disabled from Android's settings menu for security reasons.
-
-% TODO add section about configuring the VPN. i.e. we always allow TCP traffic to
-% the controller. The controller IP and port have to be inputted manually.
 
 \subsection{Host-Based SDN}
 \label{sec:host-based-sdn}
