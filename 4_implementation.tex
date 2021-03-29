@@ -300,6 +300,14 @@ response from the SDN controller. The controller makes a decision based on the
 network and UI context and sends back a \texttt{packet\_out} response describing
 what to do with the flow.
 
+\begin{figure}[p]
+    \centering
+    \includegraphics[width=\textwidth]{sequence-diagram.png}
+    \caption{Flow chart of the steps used to decide whether to forward or drop a
+		packet.}
+    \label{fig:sequence-diagram}
+\end{figure}
+
 \subsubsection{OpenFlow Protocol}
 \label{sec:openflow-protocol}
 
