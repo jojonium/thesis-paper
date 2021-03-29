@@ -1,0 +1,40 @@
+\documentclass[a4paper, 10pt, american]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{csquotes}
+\usepackage{bookmark}
+\usepackage{hyperref}
+\usepackage[american]{babel}
+\usepackage[margin=1in]{geometry}
+\usepackage{setspace}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage[inline]{enumitem}
+\usepackage{lipsum}
+\graphicspath{{./images/}}
+\newcommand{\etal}{et~al. }
+
+\hyphenation{smart-phones smart-phone}
+
+\title{Thesis Proposal}
+\author{Joseph Petitti}
+\date{November 17, 2020}
+
+\begin{document}
+
+\input{0.1_title_page.tex}
+\input{0.2_forematter.tex}
+
+\input{1_introduction.tex}
+\input{2_related_work.tex}
+\input{3_approach.tex}
+\input{4_implementation.tex}
+\input{5_evaluation.tex}
+\input{6_conclusion.tex}
+
+\label{sec:references}
+%\printbibliography
+\bibliographystyle{IEEEtranS}
+\bibliography{references}
+
+\end{document}
