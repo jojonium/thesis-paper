@@ -71,6 +71,36 @@ by the VPN service includes IP source and destination addresses, protocol,
 source and destination ports, payload size, initiating application, and full
 packet payload, all of which can be used to enforce fine-grained SDN rules.
 
+\textsc{Appjudicator} can even determine which app a particular flow belongs to.
+On Android API versions equal to or higher than Q we can use the
+\texttt{ConnectivityManager} to query the operating system for which user ID
+owns a particular flow. Because each app has a different user ID in Android we
+can then use the \texttt{packageManager} to look up the package name for that
+UID as long as we requested the \texttt{QUERY\_ALL\_PACKAGES} permission. See
+Listing~\ref{lst:connToPackage} for an example of how to do this in Kotlin.
+
+\begin{figure}[h]
+\begin{lstlisting}[caption={Getting the package that owns a connection.},
+	label={lst:connToPackage}, language=Kotlin]
+@RequiresApi(Build.VERSION_CODES.Q)
+fun connToPackage(
+    protocol: Int, // either TCP (6) or UDP (17)
+    localAddress: InetSocketAddress,
+    remoteAddress: InetSocketAddress,
+    context: Context
+): String {
+	val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE)
+			as ConnectivityManager
+	val uid = cm.getConnectionOwnerUid(
+		protocol,
+		localAddress,
+		remoteAddress
+	)
+	if (uid == android.os.Process.INVALID_UID) return "unknown"
+	return context.packageManager.getNameForUid(uid) ?: "unknown"
+}
+\end{lstlisting}
+\end{figure}
 % TODO explain how to link flows to PIDs
 
 Packets are organized by flow, essentially a communication channel between one
@@ -120,7 +150,9 @@ navigators. By registering an accessibility service with the operating system,
 we can be notified of changes in the UI state of other applications. These
 changes are referred to as accessibility events, and are asynchronously
 triggered by the Android operating system and delivered to the listening
-accessibility service.
+accessibility service. By using this API, \textsc{Appjudicator}'s UI monitoring
+component can be informed of almost every use interface interaction in any every
+app on the device.
 
 % TODO include details about the process of registering an accessibility service
 % in code
