@@ -101,7 +101,6 @@ fun connToPackage(
 }
 \end{lstlisting}
 \end{figure}
-% TODO explain how to link flows to PIDs
 
 Packets are organized by flow, essentially a communication channel between one
 application and another. A flow is defined as a sequence of packets with the
@@ -154,8 +153,10 @@ accessibility service. By using this API, \textsc{Appjudicator}'s UI monitoring
 component can be informed of almost every use interface interaction in any every
 app on the device.
 
-% TODO include details about the process of registering an accessibility service
-% in code
+Accessibility services are very dangerous from a security perspective, so they
+must be registered with the operating system and enabled manually. See
+Section~\ref{sec:accessibility-permissions} for details on how to do this in
+code.
 
 \subsubsection{Accessibility Events}
 \label{sec:accessibility-events}
