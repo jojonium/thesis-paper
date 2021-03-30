@@ -1,36 +1,90 @@
 \section{Background and Related Work}
 \label{sec:related-work}
 
-Related work has been conducted in both of the main focus areas of this project: the use of UI interaction data for security and implementing SDN on the Android platform. We now review such work.
+Related work has been conducted in both of the main focus areas of this project:
+the use of UI interaction data for security and implementing SDN on the Android
+platform. We now review such work.
 
 \subsection{UI Interaction and Security}
 \label{sec:ui-interaction-and-security}
 
-Previous work has investigated how user interactions with the UI can be used to identify human-initiated behavior on various platforms. Harbinger examines user interface activity on Windows to provide context for network requests to previously unknown hosts in a default-deny environment~\cite{chuluundorj2019}. This approach ``hooks into'' mouse and keyboard inputs using Microsoft's UI Automation library~\cite{microsoft2018}, intercepting the input before it is received by the intended application. Although Harbinger's operations are performed synchronously they still only added six milliseconds or less of latency to 96\% of flows. In contrast, the relevant library on Android is asynchronous and event-driven~\cite{googledevelopers2020}.
+Previous work has investigated how user interactions with the UI can be used to
+identify human-initiated behavior on various platforms. Harbinger examines user
+interface activity on Windows to provide context for network requests to
+previously unknown hosts in a default-deny environment~\cite{chuluundorj2019}.
+This approach ``hooks into'' mouse and keyboard inputs using Microsoft's UI
+Automation library~\cite{microsoft2018}, intercepting the input before it is
+received by the intended application. Although Harbinger's operations are
+performed synchronously they still only added six milliseconds or less of
+latency to 96\% of flows. In contrast, the relevant library on Android is
+asynchronous and event-driven~\cite{googledevelopers2020}.
 
-Kwon \etal also used UI interaction data to distinguish human-generated from automated network requests on Windows~\cite{kwon2011}. They propose a host-based system for combating botnets by leveraging UI interaction data. But their approach of labelling any flow initiated within one second of an interaction with the flow's process as ``user generated'' ignores much of the context that can be gained from UI data and makes deliberate evasion easy.
+Kwon \etal also used UI interaction data to distinguish human-generated from
+automated network requests on Windows~\cite{kwon2011}. They propose a host-based
+system for combating botnets by leveraging UI interaction data. But their
+approach of labelling any flow initiated within one second of an interaction
+with the flow's process as ``user generated'' ignores much of the context that
+can be gained from UI data and makes deliberate evasion easy.
 
-Most previous work on Android has used the platform's \textit{AccessibilityService}, a library that includes the ability to respond to UI changes among other accessibility features. AppIntent~\cite{yang2013} uses this service to determine if an app is leaking private information by building a graph of UI interactions that could lead to information leakage. However, AppIntent is only designed to determine whether an app \textit{could} leak private information through static analysis, and does not work in real time on a flow-to-flow basis.
+Most previous work on Android has used the platform's
+\textit{AccessibilityService}, a library that includes the ability to respond to
+UI changes among other accessibility features. AppIntent~\cite{yang2013} uses
+this service to determine if an app is leaking private information by building a
+graph of UI interactions that could lead to information leakage. However,
+AppIntent is only designed to determine whether an app \textit{could} leak
+private information through static analysis, and does not work in real time on a
+flow-to-flow basis.
 
 % SDN in general section
 \subsection{Software-defined Networking}
 \label{sec:software-defined-networking}
 
-Software-defined networking (SDN) has been studied as a tool for giving network administrators more information about, and control over, intra-network traffic. In essence, SDN centralizes network intelligence by separating the forwarding of packets (the data plane) from their routing (the control plane). In this paradigm network switches merely forward packets, while all control and logic is centralized with an SDN controller server~\cite{kim2013}.
+Software-defined networking (SDN) has been studied as a tool for giving network
+administrators more information about, and control over, intra-network traffic.
+In essence, SDN centralizes network intelligence by separating the forwarding of
+packets (the data plane) from their routing (the control plane). In this
+paradigm network switches merely forward packets, while all control and logic is
+centralized with an SDN controller server~\cite{kim2013}.
 
-SDN gives administrators more fine-grained control over packet routing rules, which enables more sophisticated policy enforcement. It also provides insight into potential issues and congestion in the network from one centralized control point, rather than spread across many switches and routers. The main drawback of this approach is the high overhead that causes it to scale poorly~\cite{benzekki2016}.
+SDN gives administrators more fine-grained control over packet routing rules,
+which enables more sophisticated policy enforcement. It also provides insight
+into potential issues and congestion in the network from one centralized control
+point, rather than spread across many switches and routers. The main drawback of
+this approach is the high overhead that causes it to scale
+poorly~\cite{benzekki2016}.
 
-Some authors have investigated using end nodes, instead of routers and switches, as SDN rule caches to alleviate this problem~\cite{taylor2017, chuluundorj2019}. In this approach, each host caches rules from the SDN controller and makes routing decisions about its own network flows.
+Some authors have investigated using end nodes, instead of routers and switches,
+as SDN rule caches to alleviate this problem~\cite{taylor2017, chuluundorj2019}.
+In this approach, each host caches rules from the SDN controller and makes
+routing decisions about its own network flows.
 
-Others have investigated the potential for improving SDN's capabilities by adding context~\cite{yang2015}, an approach which \textsc{Appjudicator} also attempts. SDN rules could be more powerful and granular with more metadata, for example a network flow's initiating application.
+Others have investigated the potential for improving SDN's capabilities by
+adding context~\cite{yang2015}, an approach which \textsc{Appjudicator} also
+attempts. SDN rules could be more powerful and granular with more metadata, for
+example a network flow's initiating application.
 
 \subsection{The Android Phone as an SDN Agent}
 \label{sec:the-android-phone-as-an-sdn-agent}
 
-Many previous applications have used an Android smartphone as a SDN agent and rule cache. Hong~\etal explores the tools available to organizations for managing BYOD Android devices and proposes a system for applying SDN policies to these phones~\cite{hong2016}. They were able to apply app-specific rules that were aware of device context such as GPS location with minimal overhead.
+Many previous applications have used an Android smartphone as a SDN agent and
+rule cache. Hong~\etal explores the tools available to organizations for
+managing BYOD Android devices and proposes a system for applying SDN policies to
+these phones~\cite{hong2016}. They were able to apply app-specific rules that
+were aware of device context such as GPS location with minimal overhead.
 
-While Hong~\etal \cite{hong2016} was aimed at corporate users, HanGuard investigated using SDN principles to protect Internet of things (IoT) devices in home networks~\cite{demetriou2017}. Their application provided tools for users to easily define SDN rules for IoT apps, IoT devices, and users.
+While Hong~\etal \cite{hong2016} was aimed at corporate users, HanGuard
+investigated using SDN principles to protect Internet of things (IoT) devices in
+home networks~\cite{demetriou2017}. Their application provided tools for users
+to easily define SDN rules for IoT apps, IoT devices, and users.
 
-While each of these areas has been extensively researched alone, only Chuluundorj~\cite{chuluundorj2019} and Kwon~\etal \cite{kwon2011} have investigated how UI and network data can be combined for security purposes. However, both of these applications were developed for the Windows platform---bringing the idea to Android involves a new set of constraints and challenges. For example, our proposed solution can be installed as a normal app, and does not require recompiling the kernel or rooting the phone. This means that we cannot modify the operating system kernel as the Windows solutions do, and must abide by Android's strict permissions system.
+While each of these areas has been extensively researched alone, only
+Chuluundorj~\cite{chuluundorj2019} and Kwon~\etal \cite{kwon2011} have
+investigated how UI and network data can be combined for security purposes.
+However, both of these applications were developed for the Windows
+platform---bringing the idea to Android involves a new set of constraints and
+challenges. For example, our proposed solution can be installed as a normal app,
+and does not require recompiling the kernel or rooting the phone. This means
+that we cannot modify the operating system kernel as the Windows solutions do,
+and must abide by Android's strict permissions system.
 
 \newpage
