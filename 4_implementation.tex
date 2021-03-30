@@ -291,21 +291,20 @@ up the flow in its flow table. It finds the most specific matching rule
 (\textit{i.e.} the matching rule that had to use the fewest wildcards) and sends
 its actions back to the VPN service. If no matching rule is found in the flow
 table the flow is elevated to the controller along with UI context in a
-\texttt{packet\_in} message. 
-Section~\ref{sec:associating-network-flows-with-context} describes this process.
+\texttt{packet\_in} message. Figure~\ref{fig:packet-flow-chart} illustrates this
+process.
 
-\textsc{Appjudicator} will continue
-forwarding, blocking, or elevating packets in other flows while waiting for a
-response from the SDN controller. The controller makes a decision based on the
-network and UI context and sends back a \texttt{packet\_out} response describing
-what to do with the flow.
+\textsc{Appjudicator} will continue forwarding, blocking, or elevating packets
+in other flows while waiting for a response from the SDN controller. The
+controller makes a decision based on the network and UI context and sends back a
+\texttt{packet\_out} response describing what to do with the flow.
 
 \begin{figure}[p]
     \centering
     \includegraphics[width=\textwidth]{sequence-diagram.png}
     \caption{Flow chart of the steps used to decide whether to forward or drop a
 		packet.}
-    \label{fig:sequence-diagram}
+	\label{fig:packet-flow-chart}
 \end{figure}
 
 \subsubsection{OpenFlow Protocol}
@@ -313,11 +312,11 @@ what to do with the flow.
 
 The OpenFlow Switch Specification describes a protocol for SDN agents to connect
 to a controller and exchange messages. \textsc{Appjudicator} implements the
-minimum allowable subset of this specification. All OpenFlow messages are sent
-over TCP in OpenFlow packets. These packets have a simple 8-byte header that
-describes the OpenFlow version, the type of the message, the total length of the
-packet, and transaction ID (see Figure~\ref{fig:openflow-header}). Replies to an
-OpenFlow message have the same transaction ID as the request.
+minimum subset of this specification. All OpenFlow messages are sent over TCP in
+OpenFlow packets. These packets have a simple 8-byte header that describes the
+OpenFlow version, the type of the message, the total length of the packet, and
+transaction ID (see Figure~\ref{fig:openflow-header}). Replies to an OpenFlow
+message have the same transaction ID as the request.
 
 \begin{figure}[h]
     \centering
@@ -330,13 +329,11 @@ When the app is launched it opens a new TCP connection to a user-configurable IP
 address or host name that runs the controller server. The controller and switch
 each send a message of type \texttt{OFPT\_HELLO} to initiate the connection. The
 controller then queries the switch to see what capabilities and features it
-supports with a \texttt{OFPT\_FEATURES\_REQUEST}.  \textsc{Appjudicator} replies
+supports with a \texttt{OFPT\_FEATURES\_REQUEST}. \textsc{Appjudicator} replies
 with a message explaining that it has one physical port (the phone itself) and
 only supports two packet actions: forward and drop.  At this point the
 connection is fully established, and the controller and agent can both send
 messages back and forth. Figure~\ref{fig:openflow-handshake} shows this process.
-
-% TODO talk about how we only support a subset of normal flow table entries
 
 \begin{wrapfigure}{R}{0.4\textwidth}
 	\centering
@@ -350,19 +347,19 @@ messages back and forth. Figure~\ref{fig:openflow-handshake} shows this process.
 \subsubsection{Associating Network Flows with Context}
 \label{sec:associating-network-flows-with-context}
 
-\textit{[Details of this section may change.]}
-
 When the SDN agent intercepts a new flow to a previously unknown domain, it
 tries to associate it with UI context. The app looks up any accessibility events
-that occurred in the two seconds before the flow was initiated. If there is no
+from the past two seconds that originated from the same app that owns the
+network connection (see Section~\ref{sec:deconstructing-flows}).
+
+The app looks up any accessibility events
+that originated from the same app that owns the connection from the that occurred in the two seconds before the flow was initiated. If there is no
 likely initiator of the network flow (such as a button press) within the two
 prior seconds the flow is considered non-user-initiated. The SDN agent includes
 information about these UI events, including the event type and view hierarchy
 (see Section~\ref{sec:identifying-ui-elements}) with the packet as it is
 elevated to the controller. This UI context should allow for more powerful and
 fine-grained SDN rules.
-
-% TODO add more info here, stuff about getting PIDs
 
 \subsubsection{Default-Allow Flows}
 \label{sec:default-allow-flows}
