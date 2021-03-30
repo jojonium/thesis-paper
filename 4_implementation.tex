@@ -251,6 +251,15 @@ reminding the user that the service is still running in the background.
 
 % TODO include screenshot of permissions warning
 
+\begin{figure}[p]
+    \centering
+    \includegraphics[width=\textwidth]{sequence-diagram.png}
+    \caption{Flow chart of the steps used to decide whether to forward or drop a
+		packet.}
+	\label{fig:packet-flow-chart}
+\end{figure}
+
+
 \subsection{Host-Based SDN}
 \label{sec:host-based-sdn}
 
@@ -292,31 +301,24 @@ up the flow in its flow table. It finds the most specific matching rule
 its actions back to the VPN service. If no matching rule is found in the flow
 table the flow is elevated to the controller along with UI context in a
 \texttt{packet\_in} message. Figure~\ref{fig:packet-flow-chart} illustrates this
-process.
+process. See Section~\ref{sec:openflow-protocol} for more details about
+\texttt{packet\_in} and \texttt{packet\_out} messages.
 
 \textsc{Appjudicator} will continue forwarding, blocking, or elevating packets
 in other flows while waiting for a response from the SDN controller. The
 controller makes a decision based on the network and UI context and sends back a
 \texttt{packet\_out} response describing what to do with the flow.
 
-\begin{figure}[p]
-    \centering
-    \includegraphics[width=\textwidth]{sequence-diagram.png}
-    \caption{Flow chart of the steps used to decide whether to forward or drop a
-		packet.}
-	\label{fig:packet-flow-chart}
-\end{figure}
-
 \subsubsection{OpenFlow Protocol}
 \label{sec:openflow-protocol}
 
 The OpenFlow Switch Specification describes a protocol for SDN agents to connect
 to a controller and exchange messages. \textsc{Appjudicator} implements the
-minimum subset of this specification. All OpenFlow messages are sent over TCP in
-OpenFlow packets. These packets have a simple 8-byte header that describes the
-OpenFlow version, the type of the message, the total length of the packet, and
-transaction ID (see Figure~\ref{fig:openflow-header}). Replies to an OpenFlow
-message have the same transaction ID as the request.
+minimum subset of the OpenFlow Protocol (OFP). All OpenFlow messages are sent
+over TCP in OpenFlow packets. These packets have a simple 8-byte header that
+describes the OpenFlow version, the type of the message, the total length of the
+packet, and transaction ID (see Figure~\ref{fig:openflow-header}). Replies to an
+OpenFlow message have the same transaction ID as the request.
 
 \begin{figure}[h]
     \centering
@@ -331,9 +333,9 @@ each send a message of type \texttt{OFPT\_HELLO} to initiate the connection. The
 controller then queries the switch to see what capabilities and features it
 supports with a \texttt{OFPT\_FEATURES\_REQUEST}. \textsc{Appjudicator} replies
 with a message explaining that it has one physical port (the phone itself) and
-only supports two packet actions: forward and drop.  At this point the
-connection is fully established, and the controller and agent can both send
-messages back and forth. Figure~\ref{fig:openflow-handshake} shows this process.
+only supports two packet actions: forward and drop. At this point the connection
+is fully established, and the controller and agent can both send messages back
+and forth. Figure~\ref{fig:openflow-handshake} shows this process.
 
 \begin{wrapfigure}{R}{0.4\textwidth}
 	\centering
@@ -342,7 +344,41 @@ messages back and forth. Figure~\ref{fig:openflow-handshake} shows this process.
     \label{fig:openflow-handshake}
 \end{wrapfigure}
 
-% TODO add more about switch-initiated messages (packet-in and packet-out)
+While the app is running, the controller can modify flow rules on the
+switch by sending a \texttt{OFPT\_FLOW\_MOD} message. These instruct the switch
+to add or remove one or more flow rules, and they are the primary way to enforce
+new policy decisions.
+
+The final type of communication between the SDN agent and controller is packet
+in/out messages. When the SDN agent receives a packet that does not match any
+flow rules it must ask the controller what to do with it. We construct a
+customized version of the standard OFP \texttt{packet\_in} message to send to
+the controller, including UI interaction metadata (see
+Section~\ref{sec:implementation-accessibility-service}).
+Figure~\ref{fig:packet-in} shows the fields included in these messages. The
+first eight bytes are the standard OFP header. The ``buffer ID'' value will be
+included in the corresponding response so the relevant packet can be identified.
+The ``in port'' field do not apply to host-based SDN agents like Appjudicator.
+The reason field tells the controller whether this \texttt{packet\_in} is being
+sent because of a flow table miss or because an action explicitly requested
+sending the packet to the controller.
+
+Appjudicator has no concept of link layer protocols, so the field for the
+Ethernet header is left blank. Following this is the full contents of the IP
+packet in question. Up to this point the \texttt{packet\_in} follows the
+OpenFlow specification exactly, but after the packet contents we fill the rest
+of the space available (up to 1500 bytes) with UI context, including UI events
+from the same app that initiated the connection, their types, sources, and UI
+hierarchy. IP packets sent to the controller will usually be the first packet of
+a flow,\footnote{Such as a TCP SYN packet.} which are normally quite short, so
+there should be enough space to include the most relevant UI events.
+
+The controller responds with a standard \texttt{packet\_out} message, which
+tells the agent which actions to take on the flow. Optionally, the agent can
+remember this response by adding a new flow table rule that matches the same
+flow and applies the same actions so the controller will not have to be queried
+again in the future. This is not part of the OpenFlow specification but is
+feature of Appjudicator.
 
 \subsubsection{Associating Network Flows with Context}
 \label{sec:associating-network-flows-with-context}
@@ -361,6 +397,13 @@ information about these UI events, including the event type and view hierarchy
 elevated to the controller. This UI context should allow for more powerful and
 fine-grained SDN rules.
 
+\begin{figure}[p]
+	\centering
+	\includegraphics[width=0.9\textwidth]{packet-in.png}
+    \caption{Fields in Appjudicator's custom \texttt{packet\_in} message.}
+    \label{fig:packet-in}
+\end{figure}
+
 \subsubsection{Default-Allow Flows}
 \label{sec:default-allow-flows}
 
@@ -371,8 +414,6 @@ system and common applications in advance.  While running in calibration mode,
 requests to a default-allow map. Then later, while operating normally, the app
 will not question flows to these pairs of IP address and ports even if they are
 not user-initiated.
-
-% TODO add more info here
 
 % TODO what to do when controller is unavailable
 
