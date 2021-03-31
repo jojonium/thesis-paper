@@ -8,6 +8,14 @@ platform. We now review such work.
 \subsection{UI Interaction and Security}
 \label{sec:ui-interaction-and-security}
 
+\begin{wrapfigure}{R}{0.4\textwidth}
+	\centering
+	\includegraphics[width=0.4\textwidth]{a11y-warning-screenshot.png}
+	\caption{Android displays this warning when enabling an accessibility
+		service.}
+	\label{fig:a11y-warning}
+\end{wrapfigure}
+
 Previous work has investigated how user interactions with the UI can be used to
 identify human-initiated behavior on various platforms. Harbinger examines user
 interface activity on Windows to provide context for network requests to
@@ -26,16 +34,32 @@ approach of labelling any flow initiated within one second of an interaction
 with the flow's process as ``user generated'' ignores much of the context that
 can be gained from UI data and makes deliberate evasion easy.
 
+\subsubsection{Android's Accessibility Service}
+\label{sec:androids-accessibility-service}
+
 Most previous work on Android has used the platform's
 \textit{AccessibilityService}, a library that includes the ability to respond to
-UI changes among other accessibility features. AppIntent~\cite{yang2013} uses
-this service to determine if an app is leaking private information by building a
-graph of UI interactions that could lead to information leakage. However,
-AppIntent is only designed to determine whether an app \textit{could} leak
-private information through static analysis, and does not work in real time on a
-flow-to-flow basis.
+UI changes among other accessibility features~\cite{googledevelopers2020}. Apps
+that implement this API can be notified asynchronously of UI state transitions
+in other all apps on the phone.
 
-% SDN in general section
+These services break the operating system's normally strong
+sandboxing principles by their ability to read and interact with anything
+displayed on the screen~\cite{kalysch2018}. For security reasons, Android
+requires any accessibility service to be enabled manually by the user in the
+settings app. The operating system displays a dialog box to warn the user of the
+potential security risks involved with accessibility services when one is first
+enabled (see Figure~\ref{fig:a11y-warning}). Still, some have argued that even
+this warning is not descriptive enough of the powerful and wide-reaching
+permissions given to accessibility services~\cite{kalysch2018}.
+
+Some prior work has been done on detecting malicious behavior using an
+accessibility service. AppIntent~\cite{yang2013}, for example, uses this service
+to determine if an app is leaking private information by building a graph of UI
+interactions that could lead to information leakage. However, AppIntent is only
+designed to determine whether an app \textit{could} leak private information
+through static analysis, and does not work in real time on a flow-to-flow basis.
+
 \subsection{Software-defined Networking}
 \label{sec:software-defined-networking}
 
@@ -45,6 +69,17 @@ In essence, SDN centralizes network intelligence by separating the forwarding of
 packets (the data plane) from their routing (the control plane). In this
 paradigm network switches merely forward packets, while all control and logic is
 centralized with an SDN controller server~\cite{kim2013}.
+
+The most commonly used SDN protocol is OpenFlow, a standard maintained by the
+Open Networking Foundation~\cite{erickson2011}. The OpenFlow protocol provides a
+standard way for SDN agents (usually network switches) to cache
+packet-forwarding rules~\cite{openflowspec}. When a packet from a new flow
+arrives at the agent, it looks up the most specific rule that applies to the
+packet, then performs the actions listed in the rule. These actions can include
+changing fields in the packet's header, forwarding it out a specific port, or
+dropping the flow entirely. If the switch has no matching rule in its flow
+table---or if a rule specifically requests it---the switch can forward the
+packet in question to the central controller server to ask what to do with it.
 
 SDN gives administrators more fine-grained control over packet routing rules,
 which enables more sophisticated policy enforcement. It also provides insight
@@ -66,7 +101,7 @@ example a network flow's initiating application.
 \subsection{The Android Phone as an SDN Agent}
 \label{sec:the-android-phone-as-an-sdn-agent}
 
-Many previous applications have used an Android smartphone as a SDN agent and
+Several previous applications have used an Android smartphone as a SDN agent and
 rule cache. Hong~\etal explores the tools available to organizations for
 managing BYOD Android devices and proposes a system for applying SDN policies to
 these phones~\cite{hong2016}. They were able to apply app-specific rules that
