@@ -14,11 +14,21 @@ or block individual flows. The app is made up of three primary components:
 		specification~\cite{openflowspec}.
 \end{enumerate*}
 
+\begin{wrapfigure}{R}{0.4\textwidth}
+	\centering
+	\includegraphics[width=0.4\textwidth]{ui-screenshot.png}
+	\caption{A screenshot of \textsc{Appjudicator}'s user interface.}
+	\label{fig:ui-screenshot}
+\end{wrapfigure}
+
+
 The app is implemented using Kotlin, an object-oriented programming language
 that is interoperable with Java and compiles to Java Virtual Machine bytecode.
 This is Google's preferred language for Android development, and makes some
 tasks like null-checking and concurrency easier than they would be in
-Java~\cite{lardinois2019}.
+Java~\cite{lardinois2019}. As a proof of concept, the app's user interface is
+minimal, simply providing a list of which services are running and a method to
+toggle them (see Figure~\ref{fig:ui-screenshot}).
 
 The VPN service implements Android's \texttt{VpnService}
 API~\cite{googledevelopers2020vpn}, but connects to a packet-capturing class
@@ -180,6 +190,14 @@ could potentially expose private user data the service must declare the
 this attribute set, Android will warn the user that the application can retrieve
 the contents of the screen when it is enabled.
 
+\begin{wrapfigure}{L}{0.4\textwidth}
+	\centering
+	\includegraphics[width=0.4\textwidth]{a11y-warning-screenshot.png}
+	\caption{Android displays this warning when enabling an accessibility
+		service.}
+	\label{fig:a11y-warning}
+\end{wrapfigure}
+
 By default, the operating system only includes view objects it thinks are
 important to accessibility with the accessibility event, but we can request
 information about all views instead by passing the 
@@ -234,7 +252,7 @@ guidelines~\cite{norman2013}.
 \textsc{Appjudicator} declares a service that requests the
 \texttt{BIND\_ACCESSIBILITY\_SERVICE} permission in the Android manifest file.
 This declaration tells Android which class represents the service, and also
-specifies another XML configuration file.  The file provides metadata about the
+specifies another XML configuration file. The file provides metadata about the
 service, such as listing which types of accessibility events to subscribe to,
 and providing a description of the service's purpose to be shown to the user
 when it is enabled.
@@ -243,11 +261,12 @@ For security reasons an app cannot enable its own accessibility
 service~\cite{kalysch2018}. To prevent malware from taking advantage of the
 far-reaching permissions of accessibility services, a user must manually enable
 the service in the system settings after being prompted with a dialogue box that
-explains some of the risks involved. \textsc{Appjudicator} can only point the
-user toward the settings page, the rest must be done manually. A user may have
-any number of accessibility services running at a time, but they must be
-individually manually enabled and each display a persistent notification
-reminding the user that the service is still running in the background.
+explains some of the risks involved (see Figure~\ref{fig:a11y-warning}).
+\textsc{Appjudicator} can only point the user toward the settings page, the rest
+must be done manually. A user may have any number of accessibility services
+running at a time, but they must be individually manually enabled and each
+display a persistent notification reminding the user that the service is still
+running in the background.
 
 % TODO include screenshot of permissions warning
 
