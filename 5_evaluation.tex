@@ -19,6 +19,29 @@ system.
 \subsubsection{Experimental Setup}
 \label{sec:experimental-setup}
 
+For this experiment, we tested the app both in an emulator an on a physical
+Android device. The emulator test was performed on a virtual Google Pixel 4,
+with API level 30 (the newest available). Physical tests were performed on a
+real Google Pixel 3 phone running Android 11 with API level 30.
+
+In both cases we used Google's UI Automator framework~\cite{uiautomator2020} to
+automate the testing process. This tool is designed for automating UI tests as
+part of an app development cycle, and provides features that make it ideal for
+our experiments. The UI Automator can simulate various kinds of UI interactions,
+including clicks, swipes, pressing hardware buttons, and even changing the
+device's orientation. It can also perform actions in multiple apps in a single
+run.
+
+We use UI Automator to simulate a series of real life use cases that would lead
+to a network request being made while \textsc{Appjudicator}'s accessibility
+service is enabled. Then we simply check service's logs to see which flows it
+marked as likely user-initiated. We run the test $x$ times to make sure the
+results are reproducible, and not merely a coincidence of timing. See
+Section~\ref{sec:practical-results} for the results of this experiment.
+
+\subsubsection{Results}
+\label{sec:practical-results}
+
 % Use UI Automator to simulate real clicks, also find other apps that make background requests automatically
 % Log whether each flow was user-generated, default-allowed, or automated
 % What percentage of those flows were classified successfully?
@@ -26,10 +49,18 @@ system.
 \subsection{Performance Evaluation}
 \label{sec:performance-evaluation}
 
+To fulfill its purpose as an always-enabled enterprise network security tool,
+\textsc{Appjudicator} has to be as unobtrusive to end users as possible. This is
+especially important because the app performs some actions on every network
+flow, so any latency added by it would be especially noticeable.
+
 \subsubsection{Measuring Added Latency}
 \label{sec:measuring-added-latency}
 
-\subsubsection{Resource Overhead}
-\label{sec:resource-overhead}
+\subsubsection{Measuring Resource Overhead}
+\label{sec:measuring-resource-overhead}
+
+\subsubsection{Results}
+\label{sec:performance-results}
 
 \newpage
