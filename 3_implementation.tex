@@ -4,7 +4,7 @@
 \textsc{Appjudicator} works by analyzing network flows with the added context of
 UI interaction data. It uses this information as part of a host-based
 software-defined networking (SDN) agent to make decisions about whether to allow
-or block individual flows. The app is made up of three primary components:
+or block individual flows. The app is composed of three primary components:
 \begin{enumerate*}[label=(\arabic*)]
 	\item a VPN service that captures and analyzes network flows from the
 		device,
@@ -16,8 +16,9 @@ or block individual flows. The app is made up of three primary components:
 
 \begin{wrapfigure}{R}{0.4\textwidth}
 	\centering
-	\includegraphics[width=0.4\textwidth]{ui-screenshot.png}
-	\caption{A screenshot of \textsc{Appjudicator}'s user interface.}
+	\includegraphics[width=0.4\textwidth]{ui-screenshot-border.png}
+	\caption{A screenshot of \textsc{Appjudicator}'s user interface (vertical
+		whitespace truncated for brevity).}
 	\label{fig:ui-screenshot}
 \end{wrapfigure}
 
@@ -45,12 +46,11 @@ describe each of these components and explain how they work together.
 
 The networking component of \textsc{Appjudicator} utilizes Android's built-in
 API for redirecting network traffic, the
-\texttt{VpnService}~\cite{googledevelopers2020vpn}. However, instead of
-connecting to a remote VPN server we connect to a simple server running locally
-on the device. We register a new VPN connection using this API and prompt the
-user to connect to it. This routes all the device's traffic through our service,
-which captures and logs packets before forwarding them along to their
-destination.
+\texttt{VpnService}~\cite{googledevelopers2020vpn}. However, rather than connect
+to a remote VPN server, we connect to a simple server running locally on the
+device. We register a new VPN connection using this API and prompt the user to
+connect to it. This routes all the device's traffic through our service, which
+captures and logs packets before forwarding them along to their destination.
 
 Once activated, the VPN service runs in the background and receives packets from
 the operating system through a \texttt{ParcelFileDescriptor} instance that can
@@ -64,8 +64,8 @@ Java sockets.
 It is normally the app's responsibility to encrypt data being transferred to the
 VPN gateway~\cite{vpnguide}, but this is unnecessary in \textsc{Appjudicator}
 because both client and server are running on the same device. We benefit from
-lower latency from not having to spend any resources encrypting and decrypting
-packets.
+reduced computational resource consumption and energy use from from not having
+to encrypt and decrypt packets.
 
 \subsubsection{Deconstructing Flows}
 \label{sec:deconstructing-flows}
@@ -81,16 +81,17 @@ by the VPN service includes IP source and destination addresses, protocol,
 source and destination ports, payload size, initiating application, and full
 packet payload, all of which can be used to enforce fine-grained SDN rules.
 
-\textsc{Appjudicator} can even determine which app a particular flow belongs to.
-On Android API versions equal to or higher than Q we can use the
-\texttt{ConnectivityManager} to query the operating system for which user ID
-owns a particular flow. Because each app has a different user ID in Android we
-can then use the \texttt{packageManager} to look up the package name for that
-UID as long as we requested the \texttt{QUERY\_ALL\_PACKAGES} permission. See
-Listing~\ref{lst:connToPackage} for an example of how to do this in Kotlin.
+\textsc{Appjudicator} associates an app with the flows it created.  On Android
+API versions Q and later we can use the \texttt{ConnectivityManager} to query
+the operating system for which user ID owns a particular flow. Because each app
+has a different user ID in Android, we can then use the \texttt{packageManager}
+to look up the package name for that UID as long as we requested the
+\texttt{QUERY\_ALL\_PACKAGES} permission. See Listing~\ref{lst:connToPackage}
+for an example of how to do this in Kotlin.
 
 \begin{figure}[h]
-\begin{lstlisting}[caption={Getting the package that owns a connection.},
+\begin{lstlisting}[caption={Source code to obtain the package that created a
+		given network flow.},
 	label={lst:connToPackage}, language=Kotlin]
 @RequiresApi(Build.VERSION_CODES.Q)
 fun connToPackage(
@@ -114,21 +115,23 @@ fun connToPackage(
 
 Packets are organized by flow, essentially a communication channel between one
 application and another. A flow is defined as a sequence of packets with the
-same source address, source port, destination address, destination port, and
-transport layer protocol (either TCP or UDP). Packets are stored in queues by
-flow while awaiting a response from the SDN agent. These queues are stored in a
-has map, indexed by the concatenation of the flow's addresses, ports, and
+same source IP address, source port, destination IP address, destination port,
+and transport layer protocol (either TCP or UDP). Packets are stored in queues
+by flow while awaiting a response from the SDN agent. These queues are stored in
+a hash map, indexed by the concatenation of the flow's addresses, ports, and
 protocol. When the SDN agent reaches a decision, the VPN service looks up the
-flow and either forwards all queued packets in order or drops them.
+flow and, based on the agent's decision, it either forwards all queued packets
+in order or drops them.
 
 \subsubsection{Multithreading}
 \label{sec:multithreading}
 
 Network connections are performance-critical, so we need to ensure that the user
 experience is not blocked waiting for \textsc{Appjudicator} to process network
-requests. All network processing is performed off of the main thread using
-Kotlin's concurrency framework. This allows the VPN service to have a minimal
-impact on performance.
+requests. The VPN service creates new IO threads using Kotlin's concurrency
+framework so that network processing can be performed off the main thread.
+This allows the VPN service to have a minimal impact on performance, and
+prevents the UI from blocking while waiting for network operations.
 
 \subsubsection{Permissions and Security}
 \label{sec:vpn-permissions}
@@ -146,15 +149,17 @@ configured to connect to the VPN automatically on startup. The service can also
 be stopped or disabled from Android's settings menu for security reasons.
 
 There is one kind of traffic we never want to block: communications between the
-SDN agent and controller. These values must be specified in the app's
-configuration, so the VPN service is programmed to always allow TCP packets
-going to the controller's IP and port.
+SDN agent and controller. The SDN agent uses the \texttt{VpnService.protect()}
+method~\cite{googledevelopers2020vpn} on the socket channel to the controller to
+make sure this traffic is not intercepted by the VPN.
+
+% TODO what about DHCP?
 
 \subsection{Accessibility Service}
 \label{sec:implementation-accessibility-service}
 
 Android's \texttt{AccessibilityService} API is designed for applications for
-individuals with additional need for tools like screen readers and automated UI
+individuals with additional needs for tools like screen readers and automated UI
 navigators. By registering an accessibility service with the operating system,
 we can be notified of changes in the UI state of other applications. These
 changes are referred to as accessibility events, and are asynchronously
@@ -163,19 +168,19 @@ accessibility service. By using this API, \textsc{Appjudicator}'s UI monitoring
 component can be informed of almost every use interface interaction in any every
 app on the device.
 
-Accessibility services are very dangerous from a security perspective, so they
-must be registered with the operating system and enabled manually. See
-Section~\ref{sec:accessibility-permissions} for details on how to do this in
-code.
+Accessibility services can be very dangerous from a security perspective, so they
+must be registered with the operating system and enabled manually. In
+Section~\ref{sec:accessibility-permissions} we provide more details on how to do
+so programmatically.
 
 \subsubsection{Accessibility Events}
 \label{sec:accessibility-events}
 
 An accessibility event represents a single state change in the user interface of
-an app, such as a button being clicked, a view being swiped, or the focus
+an app, such as a button being pressed, a view being swiped, or the focus
 changing~\cite{accessibilityserviceguide}. An accessibility service can specify
 the particular app packages and event types it wants to receive, but
-\textsc{Appjudicator} registers for all all event types from all packages.
+\textsc{Appjudicator} registers to receive all event types from all packages.
 
 The accessibility event object contains some context about the UI interaction,
 including the type of UI element, the type of interaction (\textit{e.g.} click,
@@ -196,7 +201,9 @@ information about all views instead by passing the
 \texttt{FLAG\_INCLUDE\_NOT\_IMPORTANT\_VIEWS} flag to the accessibility
 service~\cite{accessibilityserviceguide}.
 
-These accessibility events are fired for almost every type of UI interaction,
+% TODO add example output
+
+These accessibility events are triggered for almost every type of UI interaction,
 including clicks, swipes, long presses, and even input from devices like virtual
 or physical keyboard. However, events fired from apps that do not use Android's
 UI libraries do not provide as much context. For example, we cannot get layout
@@ -218,6 +225,12 @@ our goal of adding minimal latency. However, this asynchronous processing also
 means an app may continue generating accessibility events while an earlier event
 is still being processed, so we must make sure to handle events efficiently.
 
+There is theoretically a race condition if a \texttt{packet\_in} message is
+ready to be sent before the most recent UI interaction is finished processing.
+In practice, however, queuing packets, performing a SDN flow table lookup, and
+preparing a \texttt{packet\_in} message takes longer than the single hash map
+lookup and linked list insertion the accessibility service performs.
+
 \subsubsection{Identifying UI Elements}
 \label{sec:identifying-ui-elements}
 
@@ -232,8 +245,8 @@ position in the XML UI tree if the ID is missing or non-unique. This allows us
 to precisely correlate a network flow with the particular UI interaction that
 initiated it. These selectors should also be relatively stable across multiple
 application launches because they will not change as long as the app's UI
-structure remains constant.  Developers rarely make large structural changes to
-app interfaces because they go against common human-computer interaction
+structure remains constant. Developers rarely make large structural changes to
+app interfaces to follow common human-computer interaction
 guidelines~\cite{norman2013}.
 
 % TODO include an example.
@@ -291,9 +304,9 @@ and only one ``physical port'' in the sense that it is a switch for only one
 host. \textsc{Appjudicator} does not support any optional features of the
 specification. It can initiate a connection with an OpenFlow controller, report
 its supported features, process \texttt{flow\_mod} messages, send
-\texttt{packet\_in} messages, and receive \texttt{packet\_out} messages. See
-Section~\ref{sec:openflow-protocol} for more information on the OpenFlow
-specification.
+\texttt{packet\_in} messages, and receive \texttt{packet\_out} messages. We
+provide more information on the OpenFlow specification in
+Section~\ref{sec:openflow-protocol}.
 
 \subsubsection{SDN Rule Cache}
 \label{sec:implementation-sdn-rule-cache}
