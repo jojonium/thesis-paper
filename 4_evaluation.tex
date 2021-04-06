@@ -57,10 +57,55 @@ flow, so any latency added by it would be especially noticeable.
 \subsubsection{Measuring Added Latency}
 \label{sec:measuring-added-latency}
 
+To measure the effect of \textsc{Appjudicator} on network communication speed,
+we measure the total additional latency added by the app when initiating a TCP
+connection.
+
+For this test, we run the app in an Android virtual machine simulating a Google
+Pixel 4, on API level 30. We use POX's \texttt{forwarding.hub} module as an
+OpenFlow controller. In this mode, the controller responds to every query with
+an instruction to forward the flow to its destination~\cite{mccauley2015}. Local
+network latency is not a part of this test, so the controller server runs on the
+same physical host as the Android virtual machine. The two components still
+communicate over a regular TCP connection. The SDN agent starts with an empty
+table of flow rules, so it must send a \texttt{packet\_in} to the controller for
+every new flow. See Section~\ref{sec:openflow-protocol} for more information
+about the OpenFlow protocol.
+
+We measure the added latency of the first packet in a TCP connection because
+this is where the system does the most processing. The start of a new flow
+requires an SDN agent flow table lookup and possibly communication with the SDN
+controller, and the app has to do more processing for TCP connections than UDP
+connections. Subsequent packets in a TCP flow, and all packets in UDP flows
+have lower latency.
+
+We configure the app to log a timestamp when an outgoing TCP SYN packet is
+intercepted from the device. \textsc{Appjudicator}'s VPN service then queues the
+packet and asks the SDN agent what to do with it. The SDN agent tries to look up
+the flow in its flow table and, finding no matching entry, sends a
+\texttt{packet\_in} message to the controller. After the POX controller responds
+with a \texttt{packet\_out} the SDN agent tells the VPN service to forward the
+queued packets in the flow. Just before the initial SYN packet is sent to the
+network a second timestamp is recorded. The earlier timestamp is the time the
+packet would have been sent to the network without \textsc{Appjudicator}'s
+influence, so the difference of these two timestamps is the total latency added
+by the app.
+
+There were 562 measured TCP connections during the sampling period and seven
+removed as outliers, leaving 555 data points. The average added latency was 138
+milliseconds, with a standard deviation of 38 milliseconds. In our sample 97\%
+of TCP connections started with less than 200 milliseconds of added latency.
+Figure~\ref{fig:tcp-delay-chart} charts the full results.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{tcp-delay.png}
+    \caption{Total latency added when initiating new TCP connections.}
+	\label{fig:tcp-delay-chart}
+\end{figure}
+
 \subsubsection{Measuring Resource Overhead}
 \label{sec:measuring-resource-overhead}
 
-\subsubsection{Results}
-\label{sec:performance-results}
 
 \newpage
