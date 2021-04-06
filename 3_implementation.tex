@@ -293,10 +293,10 @@ server. The OpenFlow switch specification, the de facto standard for
 software-defined networking, describes a protocol for switch-controller
 communication~\cite{openflowspec}. This specification is designed for large
 network switches connected to potentially dozens of hosts, so implementing it on
-a smartphone in Kotlin requires some special considerations.\footnote{See
-Sections \ref{sec:software-defined-networking} and
-\ref{sec:the-android-phone-as-an-sdn-agent} for a discussion of prior work in
-host-based SDN agents on Android and other platforms.}
+a smartphone in Kotlin requires some special considerations.\footnote{Sections
+\ref{sec:software-defined-networking} and 
+\ref{sec:the-android-phone-as-an-sdn-agent} describe prior work in host-based
+SDN agents on Android and other platforms.}
 
 Large portions of the OpenFlow switch specification simply do not apply to
 \textsc{Appjudicator}. For example, the app has no concept of Ethernet frames
@@ -313,19 +313,20 @@ Section~\ref{sec:openflow-protocol}.
 
 Like any SDN agent, \textsc{Appjudicator} maintains a cache of rules to apply to
 network flows that pass through it. Rules can match any combination of source or
-destination addresses, source or destination ports, and protocol, or have
+destination IP addresses, source or destination ports, and protocol, or have
 wildcards for any of those fields. Each rule contains instructions on what types
 of flows to match and a list of actions to perform on matched flows. We only
 support the minimum allowed set of possible flow actions: forward and drop.
 
-When a new connection is opened, the VPN service notifies the SDN agent and
-queues all packets from that flow until it gets a response. The SDN agent looks
-up the flow in its flow table. It finds the most specific matching rule
-(\textit{i.e.} the matching rule that had to use the fewest wildcards) and sends
-its actions back to the VPN service. If no matching rule is found in the flow
-table the flow is elevated to the controller along with UI context in a
-\texttt{packet\_in} message. Figure~\ref{fig:packet-flow-chart} illustrates this
-process. See Section~\ref{sec:openflow-protocol} for more details about
+When a new connection is created, the VPN service notifies the SDN agent and
+queues all packets from that flow until it gets a response from the SDN agent.
+The SDN agent looks up the flow in its flow table. It finds the most specific
+matching rule (\textit{i.e.}, the matching rule that had to use the fewest
+wildcards) and sends its actions back to the VPN service. If no matching rule is
+found in the flow table, the agent elevates the flow to the controller along
+with UI context in a \texttt{packet\_in} message.
+Figure~\ref{fig:packet-flow-chart} illustrates this process.
+Section~\ref{sec:openflow-protocol} provides more information about
 \texttt{packet\_in} and \texttt{packet\_out} messages.
 
 \textsc{Appjudicator} will continue forwarding, blocking, or elevating packets
@@ -337,12 +338,13 @@ controller makes a decision based on the network and UI context and sends back a
 \label{sec:openflow-protocol}
 
 The OpenFlow Switch Specification describes a protocol for SDN agents to connect
-to a controller and exchange messages. \textsc{Appjudicator} implements the
-minimum subset of the OpenFlow Protocol (OFP). All OpenFlow messages are sent
-over TCP in OpenFlow packets. These packets have a simple 8-byte header that
-describes the OpenFlow version, the type of the message, the total length of the
-packet, and transaction ID (see Figure~\ref{fig:openflow-header}). Replies to an
-OpenFlow message have the same transaction ID as the request.
+to a controller and exchange messages~\cite{openflowspec}. \textsc{Appjudicator}
+implements the minimum subset of the OpenFlow Protocol (OFP). All OpenFlow
+messages are sent over TCP in OpenFlow packets. These packets have a simple
+8-byte header that describes the OpenFlow version, the type of the message, the
+total length of the packet, and transaction ID (see
+Figure~\ref{fig:openflow-header}). Replies to an OpenFlow message have the same
+transaction ID as the request.
 
 \begin{figure}[h]
     \centering
@@ -353,13 +355,13 @@ OpenFlow message have the same transaction ID as the request.
 
 When the app is launched it opens a new TCP connection to a user-configurable IP
 address or host name that runs the controller server. The controller and switch
-each send a message of type \texttt{OFPT\_HELLO} to initiate the connection. The
-controller then queries the switch to see what capabilities and features it
-supports with a \texttt{OFPT\_FEATURES\_REQUEST}. \textsc{Appjudicator} replies
-with a message explaining that it has one physical port (the phone itself) and
-only supports two packet actions: forward and drop. At this point the connection
-is fully established, and the controller and agent can both send messages back
-and forth. Figure~\ref{fig:openflow-handshake} shows this process.
+each send a \texttt{hello} message to initiate the connection. The controller
+then queries the switch to see what capabilities and features it supports.
+\textsc{Appjudicator} replies with a \texttt{switch\_features} message
+explaining that it has one physical port (the phone itself) and only supports
+two packet actions: forward and drop. At this point the connection is fully
+established, and the controller and agent can both send messages back and forth.
+Figure~\ref{fig:openflow-handshake} depicts this process.
 
 \begin{wrapfigure}{R}{0.4\textwidth}
 	\centering
@@ -369,33 +371,34 @@ and forth. Figure~\ref{fig:openflow-handshake} shows this process.
 \end{wrapfigure}
 
 While the app is running, the controller can modify flow rules on the
-switch by sending a \texttt{OFPT\_FLOW\_MOD} message. These instruct the switch
+switch by sending a \texttt{flow\_mod} message. These instruct the switch
 to add or remove one or more flow rules, and they are the primary way to enforce
 new policy decisions.
 
-The final type of communication between the SDN agent and controller is packet
-in/out messages. When the SDN agent receives a packet that does not match any
-flow rules it must ask the controller what to do with it. We construct a
-customized version of the standard OFP \texttt{packet\_in} message to send to
-the controller, including UI interaction metadata (see
-Section~\ref{sec:implementation-accessibility-service}).
-Figure~\ref{fig:packet-in} shows the fields included in these messages. The
-first eight bytes are the standard OFP header. The ``buffer ID'' value will be
-included in the corresponding response so the relevant packet can be identified.
-The ``in port'' field do not apply to host-based SDN agents like Appjudicator.
-The reason field tells the controller whether this \texttt{packet\_in} is being
-sent because of a flow table miss or because an action explicitly requested
-sending the packet to the controller.
+The final type of communication between the SDN agent and controller is
+\texttt{packet\_in}/\texttt{packet\_out} messages. When the SDN agent receives a
+packet that does not match any flow rules, the agent must ask the controller
+what to do with the packet. We construct a customized version of the standard
+OFP \texttt{packet\_in} message to send to the controller, including UI
+interaction metadata.\footnote{
+	Section~\ref{sec:implementation-accessibility-service} describes how this
+	metadata and how it is obtained.} Figure~\ref{fig:packet-in} shows the
+fields included in these messages. The first eight bytes are the standard OFP
+header. The ``buffer ID'' value will be included in the corresponding response
+so the relevant packet can be identified.  The ``in port'' field do not apply to
+host-based SDN agents like Appjudicator.  The reason field tells the controller
+whether this \texttt{packet\_in} is being sent because of a flow table miss or
+because an action explicitly requested sending the packet to the controller.
 
 Appjudicator has no concept of link layer protocols, so the field for the
-Ethernet header is left blank. Following this is the full contents of the IP
+Ethernet header is zeroed out. Following this is the full contents of the IP
 packet in question. Up to this point the \texttt{packet\_in} follows the
 OpenFlow specification exactly, but after the packet contents we fill the rest
 of the space available (up to 1500 bytes) with UI context, including UI events
 from the same app that initiated the connection, their types, sources, and UI
 hierarchy. IP packets sent to the controller will usually be the first packet of
-a flow,\footnote{Such as a TCP SYN packet.} which are normally quite short, so
-there should be enough space to include the most relevant UI events.
+a flow,\footnote{Such as a TCP SYN packet.} which are normally short, so
+there may often be enough space to include the most relevant UI events.
 
 The controller responds with a standard \texttt{packet\_out} message, which
 tells the agent which actions to take on the flow. Optionally, the agent can
@@ -410,16 +413,18 @@ feature of Appjudicator.
 When the SDN agent intercepts a new flow to a previously unknown domain, it
 tries to associate it with UI context. The app looks up any accessibility events
 from the past two seconds that originated from the same app that owns the
-network connection (see Section~\ref{sec:deconstructing-flows}).
+network connection (see Section~\ref{sec:deconstructing-flows}). We found that a
+time interval of two seconds is long enough to catch most user-initiated network
+requests without also associating unrelated UI interactions.
 
-The app looks up any accessibility events
-that originated from the same app that owns the connection from the that occurred in the two seconds before the flow was initiated. If there is no
-likely initiator of the network flow (such as a button press) within the two
-prior seconds the flow is considered non-user-initiated. The SDN agent includes
-information about these UI events, including the event type and view hierarchy
-(see Section~\ref{sec:identifying-ui-elements}) with the packet as it is
-elevated to the controller. This UI context should allow for more powerful and
-fine-grained SDN rules.
+The app looks up any accessibility events that originated from the same package
+that owns the connection that occurred in the two seconds before the flow was
+initiated. If there is no likely initiator of the network flow (such as a button
+press) within the two prior seconds, the flow is considered non-user-initiated.
+The SDN agent includes information about these UI events, including the event
+type and view hierarchy (see Section~\ref{sec:identifying-ui-elements}) with the
+packet as it is elevated to the controller. This UI context should allow for
+more powerful and fine-grained SDN rules.
 
 \begin{figure}[p]
 	\centering
