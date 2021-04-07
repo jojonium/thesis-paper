@@ -91,11 +91,13 @@ packet would have been sent to the network without \textsc{Appjudicator}'s
 influence, so the difference of these two timestamps is the total latency added
 by the app.
 
-There were 562 measured TCP connections during the sampling period and seven
-removed as outliers, leaving 555 data points. The average added latency was 138
-milliseconds, with a standard deviation of 38 milliseconds. In our sample 97\%
-of TCP connections started with less than 200 milliseconds of added latency.
-Figure~\ref{fig:tcp-delay-chart} charts the full results.
+There were 572 measured TCP connections during the sampling period and six were
+removed as outliers, leaving 566 data points. The average added latency was 56
+milliseconds, with a standard deviation of 23 milliseconds. In our sample 97\%
+of TCP connections started with less than 100 milliseconds of added latency.
+This corresponds to about six frames of delay on a 60 Hz screen, which is
+noticeable but still relatively small. Figure~\ref{fig:tcp-delay-chart} charts
+the full results.
 
 \begin{figure}[h]
     \centering
