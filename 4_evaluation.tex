@@ -145,7 +145,23 @@ the background consumes additional processing cycles, memory, and battery life.
 We measure the resource overhead with Android Studio's
 Profiler.~\cite{androidprofiler}
 
-\subsubsection{Resource Usage Results}
-\label{sec:resource-usage-results}
+This test was performed on an Android virtual machine simulating a Google Pixel
+4, on API level 30. We ran the app the accessibility service, VPN service, and
+SDN agent all enabled while recording its CPU, memory, and energy usage with
+Android Studio's Profiler. The test lasted for 30 minutes, during which time we
+used various other apps including Chrome, Termux, and F-Droid while
+\textsc{Appjudicator} ran in the background.
+
+During the trial, \textsc{Appjudicator}'s memory usage remained relatively
+constant. It peaked at at 150.1 MB, with an average of 137.8 MB. Its processor
+usage also usually remained low, averaging 5\% of the virtual machine's CPU but
+occasionally spiking as high as 39\%. The profiler categorized the app's energy
+usage as ``light,'' because it used only minor CPU resources and did not use any
+location resources, wake locks, or alarms.
+
+Based on these results, we conclude that \textsc{Appjudicator} has a minor
+impact on CPU, memory, and battery usage on modern hardware, and therefore could
+be used effectively as an always-on background security application.
 
 \newpage
+
