@@ -36,13 +36,13 @@ We use UI Automator to simulate a series of real life use cases that would lead
 to a network request being made while \textsc{Appjudicator}'s accessibility
 service is enabled. Then we simply check service's logs to see which flows it
 marked as likely user-initiated. We run the test $x$ times to make sure the
-results are reproducible, and not merely a coincidence of timing. See
-Section~\ref{sec:practical-results} for the results of this experiment.
+results are reproducible, and not merely a coincidence of timing.
 
 \subsubsection{Results}
 \label{sec:practical-results}
 
-% Use UI Automator to simulate real clicks, also find other apps that make background requests automatically
+% Use UI Automator to simulate real clicks, also find other apps that make
+% background requests automatically
 % Log whether each flow was user-generated, default-allowed, or automated
 % What percentage of those flows were classified successfully?
 
@@ -58,8 +58,10 @@ flow, so any latency added by it would be especially noticeable.
 \label{sec:measuring-added-latency}
 
 To measure the effect of \textsc{Appjudicator} on network communication speed,
-we measure the total additional latency added by the app when initiating a TCP
-connection.
+we measure the total additional latency added by the app. We measure added
+latency in all incoming and outgoing packets, but focus on the first packet of
+new TCP connections in particular, because these require the most processing
+time.
 
 For this test, we run the app in an Android virtual machine simulating a Google
 Pixel 4, on API level 30. We use POX's \texttt{forwarding.hub} module as an
@@ -69,45 +71,79 @@ network latency is not a part of this test, so the controller server runs on the
 same physical host as the Android virtual machine. The two components still
 communicate over a regular TCP connection. The SDN agent starts with an empty
 table of flow rules, so it must send a \texttt{packet\_in} to the controller for
-every new flow. Section~\ref{sec:openflow-protocol} describes the OpenFlow
-protocol in more detail.
+every new flow. \textsc{Appjudicator} caches responses from the controller as
+new rules, so subsequent connections to the same IP address and port over the
+same protocol will not trigger a \texttt{packet\_in}.
+Section~\ref{sec:openflow-protocol} describes the OpenFlow protocol in more
+detail.
 
-We measure the added latency of the first packet in a TCP connection because
-this is where the system does the most processing. The start of a new flow
-requires an SDN agent flow table lookup and possibly communication with the SDN
-controller, and the app has to do more processing for TCP connections than UDP
-connections. Subsequent packets in a TCP flow, and all packets in UDP flows
-have lower latency.
+We focus particularly on the added latency of the first packet in a TCP
+connection because this is where the system does the most processing. The start
+of a new flow requires an SDN flow table lookup and possibly communication with
+the SDN controller. Creating a new TCP connection requires allocating more
+memory than a new UDP connection because metadata such as the current connection
+state and most recent sequence number need to be stored in a lookup table.
+Subsequent packets in a TCP flow, and all packets in UDP flows require less
+processing overhead.
 
-We configure the app to log a timestamp when an outgoing TCP SYN packet is
-intercepted from the device. \textsc{Appjudicator}'s VPN service then queues the
-packet and asks the SDN agent what to do with it. The SDN agent tries to look up
-the flow in its flow table and, finding no matching entry, sends a
-\texttt{packet\_in} message to the controller. After the POX controller responds
-with a \texttt{packet\_out} the SDN agent tells the VPN service to forward the
-queued packets in the flow. Just before the initial SYN packet is sent to the
-network a second timestamp is recorded. The earlier timestamp is the time the
-packet would have been sent to the network without \textsc{Appjudicator}'s
-influence, so the difference of these two timestamps is the total latency added
-by the app.
+We configure the app to log a timestamp when a packet is first intercepted by
+the VPN. \textsc{Appjudicator}'s VPN service parses the packet and determines
+whether it is part of an existing connection or not, and adds it to a queue. If
+it is the start of a new connection, the VPN service queries the SDN agent and
+continues processing other packets while waiting for a response. The SDN agent
+performs a flow table lookup, and sends a \texttt{packet\_in} to the SDN
+controller if it fails to find a matching rule. If this is the case it waits for
+a response from the controller, then performs a flow mod operation to cache the
+result as a new rule. Finally the SDN agent instructs the VPN service to drop or
+forward the flow. In this test all flows are allowed, so the VPN service removes
+the packet from its queue and writes it to the correct network interface file
+descriptor.\footnote{Figure~\ref{fig:packet-flow-chart} illustrates this
+process.} Now that all of \textsc{Appjudicator}'s processing is finished a
+second timestamp is logged. The earlier timestamp is the time the packet would
+have been sent to the network without our system's interference, and the second
+timestamp is the time it actually was sent. The difference is the total latency
+added by the app.
 
-There were 572 measured TCP connections during the sampling period and six were
-removed as outliers, leaving 566 data points. The average added latency was 56
-milliseconds, with a standard deviation of 23 milliseconds. In our sample 97\%
-of TCP connections started with less than 100 milliseconds of added latency.
-This corresponds to about six frames of delay on a 60 Hz screen, which is
-noticeable but still relatively small. Figure~\ref{fig:tcp-delay-chart} charts
-the full results.
+In this test the app is configured to write the recorded time differences for
+all packets to a file. Time differences for TCP SYN packets are also logged to
+another file.
+
+\subsubsection{Latency Test Results}
+\label{sec:latency-test-results}
+
+There were 1104 packet timing traces logged during the sampling period, of which
+two were removed as outliers, leaving 1102 data points. The average added
+latency among all packets was 5.14 milliseconds, with a standard deviation of
+3.44 milliseconds.
+
+During the sampling period 184 TCP SYN timing traces were logged, of which five
+were removed as outliers, leaving 179 data points. These packets had 
+higher added latency than others, and their added latency varied more. The
+average added latency among TCP SYN packets was 14.64 milliseconds, with a
+standard deviation of 16.77 milliseconds.
+
+In our sample, 95\% of packets were processed with less than 10 milliseconds
+of total added delay. On a 60 Hz display one frame lasts 16 milliseconds, so any
+delay less than this is imperceptible to users.
+Figure~\ref{fig:added-delay-chart} charts the full results of this test.
 
 \begin{figure}[h]
     \centering
 	\includegraphics[width=\textwidth]{added-delay.png}
 	\caption{Total latency added by \textsc{Appjudicator}}
-	\label{fig:tcp-delay-chart}
+	\label{fig:added-delay-chart}
 \end{figure}
 
 \subsubsection{Measuring Resource Overhead}
 \label{sec:measuring-resource-overhead}
 
+\textsc{Appjudicator} has costs in both added latency and increased resource
+consumption. Running the VPN service, accessibility service, and SDN agent in
+the background consumes additional processing cycles, memory, and battery life.
+We measure the resource overhead with Android Studio's
+Profiler.~\cite{androidprofiler}
+
+\subsubsection{Resource Usage Results}
+\label{sec:resource-usage-results}
 
 \newpage
