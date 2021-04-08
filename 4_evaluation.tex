@@ -69,8 +69,8 @@ network latency is not a part of this test, so the controller server runs on the
 same physical host as the Android virtual machine. The two components still
 communicate over a regular TCP connection. The SDN agent starts with an empty
 table of flow rules, so it must send a \texttt{packet\_in} to the controller for
-every new flow. See Section~\ref{sec:openflow-protocol} for more information
-about the OpenFlow protocol.
+every new flow. Section~\ref{sec:openflow-protocol} describes the OpenFlow
+protocol in more detail.
 
 We measure the added latency of the first packet in a TCP connection because
 this is where the system does the most processing. The start of a new flow
@@ -101,8 +101,8 @@ the full results.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\textwidth]{tcp-delay.png}
-    \caption{Total latency added when initiating new TCP connections.}
+	\includegraphics[width=\textwidth]{added-delay.png}
+	\caption{Total latency added by \textsc{Appjudicator}}
 	\label{fig:tcp-delay-chart}
 \end{figure}
 
