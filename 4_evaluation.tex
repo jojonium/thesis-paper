@@ -106,7 +106,9 @@ added by the app.
 
 In this test the app is configured to write the recorded time differences for
 all packets to a file. Time differences for TCP SYN packets are also logged to
-another file.
+another file. Timestamps are created using Android's
+\texttt{SystemClock.elapsedRealtimeNanos()} method, which gets the number of
+nanoseconds since the system was booted.~\cite{androidsystemclock}
 
 \subsubsection{Latency Test Results}
 \label{sec:latency-test-results}
