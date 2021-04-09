@@ -39,8 +39,18 @@ the app adds less than 10 milliseconds of total latency to 95\% of processed
 packets, but this could probably be reduced with further performance
 optimizations.
 
+Some researchers have investigated SDN architectures that involve multiple
+distributed controller servers.~\cite{dixit2013, oktian2017}
+\textsc{Appjudicator} currently only connects to one statically-defined
+controller server, but could be extended in future work to connect to several.
+
 \subsection{Limitations}
 \label{sec:limitations}
+
+For ease of development and testing \textsc{Appjudicator} only supports IPv4,
+and can only handle UDP and TCP as transport layer protocols. This is enough to
+power the vast majority of everyday networking applications, but support could
+be added for IPv6 and other transport layer protocols.
 
 \subsection{Conclusion}
 \label{sec:conclusion}
