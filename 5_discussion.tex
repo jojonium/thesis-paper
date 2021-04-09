@@ -8,6 +8,24 @@ our work to answer our original research question.
 \subsection{Implications and Applications}
 \label{sec:implications-and-applications}
 
+\textsc{Appjudicator} was designed with an enterprise BYOD setting in mind, as a
+tool to give system administrators more control over employee-owned smartphones.
+Our app would work with an OpenFlow SDN controller to enforce company policy
+rules. With some modification \textsc{Appjudicator} could also be used in other
+applications. For example, our app could adapted for use by personal users in
+residential networks, and connected to a cloud-based SDN controller like the one
+proposed by Taylor~\etal\cite{taylor2017shue}
+
+The use of \textsc{Appjudicator} in an enterprise network could raise some
+privacy concerns for end users. Users may object to having logs of every UI
+interaction they make on their personal device sent to their employer. The
+system could potentially expose private data to the SDN
+controller,~\cite{kalysch2018} so administrators will have to carefully consider
+how their policy rules impact user privacy. A potential solution to this could
+be to define a set of general user intent profiles on the device, and only send
+the closest matching profile to the server with a \texttt{packet\_in} rather
+than the entire UI interaction metadata.
+
 \subsection{Future Work}
 \label{sec:future-work}
 
@@ -52,8 +70,33 @@ and can only handle UDP and TCP as transport layer protocols. This is enough to
 power the vast majority of everyday networking applications, but support could
 be added for IPv6 and other transport layer protocols.
 
+Our strategy for defining user-generated flows effective enough as a rough
+estimate of whether a user is interacting with a particular app, but it is not
+perfect. A flow from an application is considered user-initiated if a user made
+any UI interaction with that app in the past two seconds, so malicious network
+flows could be allowed if they happen to be sent within this time period.
+However, to consistently take advantage of this flaw a malicious app would have
+to install its own accessibility service to monitor UI interactions, which
+requires a user's explicit manual approval. It would be very difficult for
+malware to exploit this vulnerability while still remaining covert. To mitigate
+this issue, future work could focus on improving how we define a flow as
+user-initiated. For example, a system for detecting user intent similar to the
+one presented by Shirley and Evans~\cite{shirley2008} could be added to
+\textsc{Appjudicator}.
+
 \subsection{Conclusion}
 \label{sec:conclusion}
+
+In this thesis we have implemented a host-based SDN agent and UI monitoring
+system on Android. We have demonstrated that these systems can be combined to
+collect network data and UI context, and this data can be used to successfully
+distinguish which flows on the device are legitimately user initiated. Our
+experiments show that the system can run in the background with minimal overhead
+to CPU, memory, and battery usage, and adds an acceptably low amount of overall
+end-to-end latency to network operations on the device. Finally, we have
+discussed how the application can be used as a network security tool in
+enterprise environments and what future work is required to turn our proof of
+concept into a practical application.
 
 \newpage
 
