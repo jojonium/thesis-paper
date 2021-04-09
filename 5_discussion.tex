@@ -1,0 +1,49 @@
+\section{Discussion}
+\label{sec:discussion}
+
+Here we discuss the practical applications of our work, as well as its
+limitations, future work, and possible improvements. We also use the results of
+our work to answer our original research question.
+
+\subsection{Implications and Applications}
+\label{sec:implications-and-applications}
+
+\subsection{Future Work}
+\label{sec:future-work}
+
+More work is needed to implement \textsc{Appjudicator} as a practical network
+security tool in an enterprise setting. Our work's biggest limitation is that it
+is only available for Android. Android is the leading smartphone operating
+system, capturing over 71\% of the global market share,~\cite{statcounter2021}
+but implementing a similar system on iOS (which makes up virtually all of the
+remaining market share) would make the system accessible to all BYOD employees.
+This work would be necessary before a company could require its employees to use
+\textsc{Appjudicator}---extra insight and control over \textit{only} Android
+users would provide little benefit.
+
+Custom SDN controller software could also be written to take advantage of
+\textsc{Appjudicator}'s enhanced context information. Our app sends metadata
+about recent UI interactions along with each \texttt{packet\_in}, so a custom
+controller could take advantage of this extra context in its decision-making
+process. For example, a controller could have a more sophisticated algorithm for
+inferring user intent, and use this to block non-user-initiated flows from
+mobile devices. A custom controller could also empower system administrators to
+write fine-grained, context-aware SDN policies. 
+
+Further work could also be done to mitigate some of the limitations discussed in
+Section~\ref{sec:limitations}. Because our work is a proof of concept little
+development time was spent on optimization or graphical polish. A more
+user-friendly UI and settings menu could be implemented for the app. Our latency
+test results (described in Section~\ref{sec:latency-test-results}) indicate that
+the app adds less than 10 milliseconds of total latency to 95\% of processed
+packets, but this could probably be reduced with further performance
+optimizations.
+
+\subsection{Limitations}
+\label{sec:limitations}
+
+\subsection{Conclusion}
+\label{sec:conclusion}
+
+\newpage
+
