@@ -35,16 +35,18 @@ run.
 We use UI Automator to simulate a series of real life use cases that would lead
 to a network request being made while \textsc{Appjudicator}'s accessibility
 service is enabled. Then we simply check service's logs to see which flows it
-marked as likely user-initiated. We run the test $x$ times to make sure the
-results are reproducible, and not merely a coincidence of timing.
+marked as likely user-initiated.
 
 \subsubsection{Results}
 \label{sec:practical-results}
 
-% Use UI Automator to simulate real clicks, also find other apps that make
-% background requests automatically
-% Log whether each flow was user-generated, default-allowed, or automated
-% What percentage of those flows were classified successfully?
+\hl{TODO: This section will include results of the above test.}
+
+\hl{TODO: Include a graph here that shows network activity in the two seconds
+following a button press.}
+
+\hl{TODO: Include results and a chart showing what percentage of UI events in
+	common apps have a resource ID and how many need a UI hierarchy selector.}
 
 \subsection{Performance Evaluation}
 \label{sec:performance-evaluation}
@@ -128,6 +130,9 @@ In our sample, 95\% of packets were processed with less than 10 milliseconds
 of total added delay. On a 60 Hz display one frame lasts 16 milliseconds, so any
 delay less than this is imperceptible to users.
 Figure~\ref{fig:added-delay-chart} charts the full results of this test.
+
+\hl{TODO: Include microtiming results here, showing how long various functions
+	take on average.}
 
 \begin{figure}[h]
     \centering
