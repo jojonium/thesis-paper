@@ -14,45 +14,66 @@ procedures used for each of these experiments and their results.
 The goal of this experiment is to determine whether \textsc{Appjudicator} can
 successfully distinguish between network flows that were specifically initiated
 by a human user and flows generated automatically by an app or the Android
-system.
+system. We attempt to justify the parameters used for defining a flow as ``user
+initiated.''
 
 \subsubsection{Experimental Setup}
 \label{sec:experimental-setup}
 
-For this experiment, we tested the app both in an emulator an on a physical
-Android device. The emulator test was performed on a virtual Google Pixel 4,
-with API level 30 (the newest available). Physical tests were performed on a
-real Google Pixel 3 phone running Android 11 with API level 30.
+This test was performed on a virtual Google Pixel 4, with API level 30 (the
+newest available). We perform actions on the phone to simulate real life use
+cases with \textsc{Appjudicator}, including browsing the web in Chrome,
+exploring an app store (F-Droid), and playing a game with advertisements. We use
+our app's logging to record whether each flow is considered ``user initiated,''
+along with the timing of UI interactions and flow table lookups.
 
-In both cases we used Google's UI Automator framework~\cite{uiautomator2020} to
-automate the testing process. This tool is designed for automating UI tests as
-part of an app development cycle, and provides features that make it ideal for
-our experiments. The UI Automator can simulate various kinds of UI interactions,
-including clicks, swipes, pressing hardware buttons, and even changing the
-device's orientation. It can also perform actions in multiple apps in a single
-run.
-
-We use UI Automator to simulate a series of real life use cases that would lead
-to a network request being made while \textsc{Appjudicator}'s accessibility
-service is enabled. Then we simply check service's logs to see which flows it
-marked as likely user-initiated.
+To evaluate the effectiveness of our UI element system for identifying UI
+elements (described in Section~\ref{sec:identifying-ui-elements}), we record
+the proportion of accessibility events in our sampling period came from sources
+with a unique resource ID.
 
 \subsubsection{Results}
 \label{sec:practical-results}
 
-\hl{TODO: This section will include results of the above test.}
+\textsc{Appjudicator} was successful in identifying 100\% of new flows that
+occurred within two seconds of a UI interaction as user initiated. This raises
+the question of how effective this two second cutoff is. Based on our
+experience, two seconds seems to be generous enough to allow all flows
+associated with the UI interaction to be triggered, without being so lenient
+that unrelated flows are also allowed.
+
+Professional sources generally support this reasoning. Google's developer blog
+recommends two seconds of total page page load time is ``the threshold for
+ecommerce site `acceptability.'"~\cite{ohye2010} Search engine optimization firm
+Semrush writes ``Serve your customers with the page load time they need, a good
+goal being 1--2 seconds.''~\cite{bird2020}
+
+Figure~\ref{fig:lookups-after-click} shows illustrates this cutoff. It shows
+four typical page loads in Chrome, with each point in the plot representing a
+new flow made by Chrome. The accessibility event that initiated the page load
+(clicking on a link) occurs at time 0. The dashed gray line shows the two second
+cutoff. All the flows that occurred before this cutoff, within the green shaded
+area, are considered to be user initiated, while flows that occurred after the
+cutoff are not. These flows are likely the result of asynchronous JavaScript
+network calls initiated by the page, not directly by user action.
 
 \begin{figure}[h]
     \centering
 	\includegraphics[width=\textwidth]{lookups-after-click.png}
 	\caption{The delay between a click event and the new flows that it
 		initiates. The dashed vertical line shows the two second cutoff: flows
-		before this line are considered to be associated with the click event.}
+		before this line (in the green area) are considered to be associated
+		with the click event.}
 	\label{fig:lookups-after-click}
 \end{figure}
 
-\hl{TODO: Include results and a chart showing what percentage of UI events in
-	common apps have a resource ID and how many need a UI hierarchy selector.}
+In our trial we found that approximately 85\% of accessibility events had a
+source element with a unique resource ID. Even dynamically generated UI elements
+often have resource IDs. For example, links in webpages are given IDs generated
+by Chrome. This is good news for our system, because resource IDs are the
+easiest and most effective way to uniquely identify UI elements form
+accessibility events. Still, this figure may vary in poorly made apps in which
+developers do not give every element an ID.
 
 \subsection{Performance Evaluation}
 \label{sec:performance-evaluation}
