@@ -1,8 +1,6 @@
 \section{Background and Related Work}
 \label{sec:related-work}
 
-\hl{TODO: This section will be expanded with more related work.}
-
 Related work has been conducted in both of the main focus areas of this project:
 the use of UI interaction data for security and implementing SDN on the Android
 platform. We now review such work.
@@ -26,17 +24,32 @@ This approach ``hooks into'' mouse and keyboard inputs using Microsoft's UI
 Automation library~\cite{microsoft2018}, intercepting the input before it is
 received by the intended application. Although Harbinger's operations are
 performed synchronously they still only added six milliseconds or less of
-latency to 96\% of flows. In contrast, the relevant library on Android is
-asynchronous and event-driven~\cite{googledevelopers2020}.
+latency to 96\% of flows.\footnote{In contrast, the relevant Android library is
+	asynchronous and event-driven~\cite{googledevelopers2020}.
+	Section~\ref{sec:implementation-accessibility-service} discusses the
+	benefits and challenges associated with this approach.}
 
 Kwon \etal also used UI interaction data to distinguish human-generated from
 automated network requests on Windows~\cite{kwon2011}. They propose a host-based
 system for combating botnets by leveraging UI interaction data. But their
 approach of labelling any flow initiated within one second of an interaction
 with the flow's process as ``user generated'' ignores much of the context that
-can be gained from UI data and makes deliberate evasion easy.
+can be gained from UI data.
 
-\subsubsection{Android's Accessibility Service}
+Shirley and Evans attempt to infer a users' intentions from their actions, and
+define a language for writing access control policies based on these
+intentions~\cite{shirley2008}. Their approach collects UI interactions like
+mouse clicks and keystrokes, along with the state of the user interface. Like
+other previous work mentioned above, they focus on Windows only, and use their
+program to limit malware file access.
+
+Cui \etal proposed a system called BINDER for Windows that attempts to detect
+malicious network flows by associating user input events, process start and
+finish events, and network events.~\cite{cui2005} Their system would only block
+flows locally, rather than integrating into an SDN environment, and was never
+implemented as a prototype.
+
+\subsection{Android's Accessibility Service}
 \label{sec:androids-accessibility-service}
 
 Most previous work on Android has used the platform's
@@ -45,15 +58,17 @@ UI changes among other accessibility features~\cite{googledevelopers2020}. Apps
 that implement this API can be notified asynchronously of UI state transitions
 in other all apps on the phone.
 
-These services break the operating system's normally strong
-sandboxing principles by their ability to read and interact with anything
-displayed on the screen~\cite{kalysch2018}. For security reasons, Android
-requires any accessibility service to be enabled manually by the user in the
-settings app. The operating system displays a dialog box to warn the user of the
-potential security risks involved with accessibility services when one is first
-enabled (see Figure~\ref{fig:a11y-warning}). Still, some have argued that even
-this warning is not descriptive enough of the powerful and wide-reaching
-permissions given to accessibility services~\cite{kalysch2018}.
+These services break the operating system's normally strong sandboxing
+principles by their ability to read and interact with anything displayed on the
+screen~\cite{kalysch2018, diao2019}. Real Android malware has taken advantage of
+accessibility services to spy on users and take control of mobile
+devices.~\cite{kraunelis2013} For security reasons, Android requires any
+accessibility service to be enabled manually by the user in the settings app.
+The operating system displays a dialog box to warn the user of the potential
+security risks involved with accessibility services when one is first enabled
+(see Figure~\ref{fig:a11y-warning}). Still, some have argued that even this
+warning is not descriptive enough of the powerful and wide-reaching permissions
+given to accessibility services~\cite{kalysch2018}.
 
 Some prior work has been done on detecting malicious behavior using an
 accessibility service. AppIntent~\cite{yang2013}, for example, uses this service
@@ -90,15 +105,28 @@ point, rather than spread across many switches and routers. The main drawback of
 this approach is the high overhead that causes it to scale
 poorly~\cite{benzekki2016}.
 
-Some authors have investigated using end nodes, instead of routers and switches,
-as SDN rule caches to alleviate this problem~\cite{taylor2017, chuluundorj2019}.
-In this approach, each host caches rules from the SDN controller and makes
-routing decisions about its own network flows.
+Several techniques for distributing the load on the controller server have been
+tried.~\cite{oktian2017, dixit2013} Some authors have investigated using end
+nodes, instead of routers and switches, as SDN rule caches to alleviate this
+problem~\cite{taylor2017, chuluundorj2019}.  In this approach, each host caches
+rules from the SDN controller and makes routing decisions about its own network
+flows.
+
+Taylor ~\etal explores the feasibility of separating the SDN controller from the
+local network entirely, connecting instead to a cloud-based
+controller.~\cite{taylor2017shue} They were able to achieve acceptable overhead
+for 90\% of end users by selecting low-latency public cloud locations.
 
 Others have investigated the potential for improving SDN's capabilities by
 adding context~\cite{yang2015}, an approach which \textsc{Appjudicator} also
 attempts. SDN rules could be more powerful and granular with more metadata, for
 example a network flow's initiating application.
+
+Qazi \etal attempts to classify traffic from Android phones using machine
+learning on an SDN switch.~\cite{qazi2013}. Their approach achieves 94\%
+accuracy in the top 40 Android applications. By utilizing the phone itself as
+an SDN agent \textsc{Appjudicator} is able to identify a network flow's
+originating application with 100\% accuracy.
 
 \subsection{The Android Phone as an SDN Agent}
 \label{sec:the-android-phone-as-an-sdn-agent}
