@@ -42,8 +42,14 @@ marked as likely user-initiated.
 
 \hl{TODO: This section will include results of the above test.}
 
-\hl{TODO: Include a graph here that shows network activity in the two seconds
-following a button press.}
+\begin{figure}[h]
+    \centering
+	\includegraphics[width=\textwidth]{lookups-after-click.png}
+	\caption{The delay between a click event and the new flows that it
+		initiates. The dashed vertical line shows the two second cutoff: flows
+		before this line are considered to be associated with the click event.}
+	\label{fig:lookups-after-click}
+\end{figure}
 
 \hl{TODO: Include results and a chart showing what percentage of UI events in
 	common apps have a resource ID and how many need a UI hierarchy selector.}
