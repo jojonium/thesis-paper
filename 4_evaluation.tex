@@ -184,19 +184,28 @@ the background consumes additional processing cycles, memory, and battery life.
 We measure the resource overhead with Android Studio's
 Profiler.~\cite{androidprofiler}
 
-This test was performed on an Android virtual machine simulating a Google Pixel
-4, on API level 30. We ran the app the accessibility service, VPN service, and
-SDN agent all enabled while recording its CPU, memory, and energy usage with
-Android Studio's Profiler. The test lasted for 30 minutes, during which time we
-used various other apps including Chrome, Termux, and F-Droid while
+This test was performed twice, first on an Android virtual machine simulating a
+Google Pixel 4, on API level 30, and second on a physical Google Pixel 3, also
+on API level 30. We ran the app the accessibility service, VPN service, and SDN
+agent all enabled while recording its CPU, memory, and energy usage with Android
+Studio's Profiler. Each test lasted for 30 minutes, during which time we used
+various other apps including Chrome, Termux, and F-Droid while
 \textsc{Appjudicator} ran in the background.
 
-During the trial, \textsc{Appjudicator}'s memory usage remained relatively
-constant. It peaked at at 150.1 MB, with an average of 137.8 MB. Its processor
-usage also usually remained low, averaging 5\% of the virtual machine's CPU but
-occasionally spiking as high as 39\%. The profiler categorized the app's energy
-usage as ``light,'' because it used only minor CPU resources and did not use any
-location resources, wake locks, or alarms.
+During the virtual trial, \textsc{Appjudicator}'s memory usage remained
+relatively constant. It peaked at at 150.1 MB, with an average of 137.8 MB. Its
+processor usage also usually remained low, averaging 5\% of the virtual
+machine's CPU but occasionally spiking as high as 39\%. The profiler categorized
+the app's energy usage as ``light,'' because it used only minor CPU resources
+and did not use any location resources, wake locks, or alarms.
+
+Results were similar in the physical trial. \textsc{Appjudicator} used less
+memory on the physical device, peaking at 122.3 MB and averaging 85.4 MB. This
+may be because the Pixel 3 has less available RAM than the Pixel 4. CPU usage
+was higher on the physical phone, averaging 17\% and spiking as high as 55\%.
+Again this may be because of hardware differences, as the Pixel 3 has an older,
+slower processor. The app's energy usage was again classified as ``light'' by
+the profiler during the physical trial. 
 
 Based on these results, we conclude that \textsc{Appjudicator} has a minor
 impact on CPU, memory, and battery usage on modern hardware, and therefore could
