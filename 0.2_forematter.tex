@@ -1,7 +1,24 @@
 \pagenumbering{roman}
 
 \begin{abstract}
-	\hl{TODO: Write this section.}
+	Smartphones are becoming increasingly important in all aspects of life,
+	including corporate environments, where ``bring your own device'' (BYOD)
+	policies are gaining widespread acceptance. Malware already exists to take
+	advantage of Android phones in BYOD settings, aiming to take control of
+	devices with access to privileged information by disguising itself as a
+	benign app. These stealthy malware could be easier to detect if network
+	administrators had more insight into employee-owned smartphones. We propose
+	a system, called \textsc{Appjudicator}, to address this issue. It implements
+	an accessibility service to monitor user interactions with the UI of other
+	apps, so this context can be used in malware detection. For example, if an
+	app sends a new network request without any user interaction, this flow
+	could be the result of malware and should be investigated more. Our app is a
+	host-based software defined networking (SDN) agent, and works in conjunction
+	with an SDN controller to monitor and control the phone's networking
+	abilities based on the organizations SDN rules and our UI context. We build
+	a proof of concept application and find that it can successfully combine
+	network and UI data with only 10 milliseconds of total added latency in 95\%
+	of flows.
 \end{abstract}
 
 \clearpage
