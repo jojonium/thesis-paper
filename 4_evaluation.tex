@@ -158,8 +158,15 @@ of total added delay. On a 60 Hz display one frame lasts 16 milliseconds, so any
 delay less than this is imperceptible to users.
 Figure~\ref{fig:added-delay-chart} charts the full results of this test.
 
-\hl{TODO: Include microtiming results here, showing how long various functions
-	take on average.}
+In measuring the timing of individual functions we found that the initial VPN
+overhead (reading, processing, and queuing packets) took an average of 44
+microseconds. Looking up flows in the flow table took an average of 53
+microseconds with 10 initial rules, although this will increase as more flow
+table entries are added. Accessibility event lookup took an average of 63
+microseconds. By far the biggest contributor to overall latency in our trial was
+sending \texttt{packet\_in} messages and waiting for a response from the
+controller. The SDN agent waited 2448 microseconds on average for a
+\texttt{packet\_out} message.
 
 \begin{figure}[h]
     \centering
