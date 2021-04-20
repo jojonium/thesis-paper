@@ -4,7 +4,7 @@
 We seek to evaluate whether \textsc{Appjudicator} is able to successfully
 achieve its goal of distinguishing user-initiated network flows using UI
 context, and whether it can do so with acceptable overhead. To determine whether
-the app accomplishes its goal we perform a practical analysis and to measure the
+the app accomplishes its goal, we perform a practical analysis and to measure the
 app's resource cost we perform a performance evaluation. We now explain the
 procedures used for each of these experiments and their results.
 
@@ -44,9 +44,9 @@ that unrelated flows are also allowed.
 
 Professional sources generally support this reasoning. Google's developer blog
 recommends two seconds of total page page load time is ``the threshold for
-ecommerce site `acceptability.'"~\cite{ohye2010} Search engine optimization firm
+ecommerce site `acceptability'"~\cite{ohye2010}. Search engine optimization firm
 Semrush writes ``Serve your customers with the page load time they need, a good
-goal being 1--2 seconds.''~\cite{bird2020}
+goal being 1--2 seconds''~\cite{bird2020}.
 
 Figure~\ref{fig:lookups-after-click} shows illustrates this cutoff. It shows
 four typical page loads in Chrome, with each point in the plot representing a
@@ -68,12 +68,12 @@ network calls initiated by the page, not directly by user action.
 \end{figure}
 
 In our trial we found that approximately 85\% of accessibility events had a
-source element with a unique resource ID. Even dynamically generated UI elements
+source element with a unique resource ID. Even dynamically-generated UI elements
 often have resource IDs. For example, links in webpages are given IDs generated
 by Chrome. This is good news for our system, because resource IDs are the
-easiest and most effective way to uniquely identify UI elements form
-accessibility events. Still, this figure may vary in poorly made apps in which
-developers do not give every element an ID.
+easiest and most effective way to uniquely identify UI elements from
+accessibility events. Still, this figure may vary in apps in which developers do
+not give every element an ID.
 
 \subsection{Performance Evaluation}
 \label{sec:performance-evaluation}
@@ -121,37 +121,43 @@ whether it is part of an existing connection or not, and adds it to a queue. If
 it is the start of a new connection, the VPN service queries the SDN agent and
 continues processing other packets while waiting for a response. The SDN agent
 performs a flow table lookup, and sends a \texttt{packet\_in} to the SDN
-controller if it fails to find a matching rule. If this is the case it waits for
-a response from the controller, then performs a flow mod operation to cache the
-result as a new rule. Finally the SDN agent instructs the VPN service to drop or
-forward the flow. In this test all flows are allowed, so the VPN service removes
-the packet from its queue and writes it to the correct network interface file
-descriptor.\footnote{Figure~\ref{fig:packet-flow-chart} illustrates this
-process.} Now that all of \textsc{Appjudicator}'s processing is finished a
-second timestamp is logged. The earlier timestamp is the time the packet would
-have been sent to the network without our system's interference, and the second
-timestamp is the time it actually was sent. The difference is the total latency
-added by the app.
+controller if it fails to find a matching rule. If this is the case, it waits
+for a response from the controller, then performs a \texttt{flow\_mod} operation
+to cache the result as a new rule. Finally the SDN agent instructs the VPN
+service to drop or forward the flow. In this test all flows are allowed, so the
+VPN service removes the packet from its queue and writes it to the correct
+network interface file descriptor.\footnote{Figure~\ref{fig:packet-flow-chart}
+illustrates this process.} After all of \textsc{Appjudicator}'s processing is
+finished, a second timestamp is logged. The earlier timestamp is the time the
+packet would have been sent to the network without our system's interference,
+and the second timestamp is the time it actually was sent. The difference is the
+total latency added by the app.
 
 In this test the app is configured to write the recorded time differences for
 all packets to a file. Time differences for TCP SYN packets are also logged to
 another file. Timestamps are created using Android's
 \texttt{SystemClock.elapsedRealtimeNanos()} method, which gets the number of
-nanoseconds since the system was booted.~\cite{androidsystemclock}
+nanoseconds since the system was booted~\cite{androidsystemclock}.
 
 \subsubsection{Latency Test Results}
 \label{sec:latency-test-results}
 
-There were 1104 packet timing traces logged during the sampling period, of which
-two were removed as outliers, leaving 1102 data points. The average added
+There were 1,107 packet timing traces logged during the sampling period, of
+which five were removed as outliers, leaving 1,102 data points. The average added
 latency among all packets was 5.14 milliseconds, with a standard deviation of
 3.44 milliseconds.
 
-During the sampling period 184 TCP SYN timing traces were logged, of which five
-were removed as outliers, leaving 179 data points. These packets had 
-higher added latency than others, and their added latency varied more. The
-average added latency among TCP SYN packets was 14.64 milliseconds, with a
-standard deviation of 16.77 milliseconds.
+During the TCP SYN sampling period 181 timing traces were logged, of which two
+were removed as outliers, leaving 179 data points. These packets had higher
+added latency than others, and their added latency varied more. The average
+added latency among TCP SYN packets was 14.64 milliseconds, with a standard
+deviation of 16.77 milliseconds.
+
+Outlier traces, which recorded a total added latency of greater than 150
+milliseconds. This is more than 10 times the TCP SYN average latency, and over
+29 times the average latency of all packets. Because these outliers are so rare,
+making up less than 0.5\% of all packets, they may have been caused by poor
+network conditions.
 
 In our sample, 95\% of packets were processed with less than 10 milliseconds
 of total added delay. On a 60 Hz display one frame lasts 16 milliseconds, so any
@@ -182,7 +188,7 @@ controller. The SDN agent waited 2448 microseconds on average for a
 consumption. Running the VPN service, accessibility service, and SDN agent in
 the background consumes additional processing cycles, memory, and battery life.
 We measure the resource overhead with Android Studio's
-Profiler.~\cite{androidprofiler}
+Profiler~\cite{androidprofiler}.
 
 This test was performed twice, first on an Android virtual machine simulating a
 Google Pixel 4, on API level 30, and second on a physical Google Pixel 3, also
