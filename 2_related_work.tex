@@ -45,9 +45,11 @@ program to limit malware file access.
 
 Cui \etal proposed a system called BINDER for Windows that attempts to detect
 malicious network flows by associating user input events, process start and
-finish events, and network events.~\cite{cui2005} Their system would only block
-flows locally, rather than integrating into an SDN environment, and was never
-implemented as a prototype.
+finish events, and network events~\cite{cui2005}. Their system would only block
+flows locally, and was never implemented. In contrast, our system integrates
+into an SDN environment and provides context to network administrators.
+
+% compare and contrast with this work.
 
 \subsection{Android's Accessibility Service}
 \label{sec:androids-accessibility-service}
@@ -62,7 +64,7 @@ These services break the operating system's normally strong sandboxing
 principles by their ability to read and interact with anything displayed on the
 screen~\cite{kalysch2018, diao2019}. Real Android malware has taken advantage of
 accessibility services to spy on users and take control of mobile
-devices.~\cite{kraunelis2013} For security reasons, Android requires any
+devices~\cite{kraunelis2013}. For security reasons, Android requires any
 accessibility service to be enabled manually by the user in the settings app.
 The operating system displays a dialog box to warn the user of the potential
 security risks involved with accessibility services when one is first enabled
@@ -75,7 +77,7 @@ accessibility service. AppIntent~\cite{yang2013}, for example, uses this service
 to determine if an app is leaking private information by building a graph of UI
 interactions that could lead to information leakage. However, AppIntent is only
 designed to determine whether an app \textit{could} leak private information
-through static analysis, and does not work in real time on a flow-to-flow basis.
+through static analysis and does not work in real time on a per-flow basis.
 
 \subsection{Software-defined Networking}
 \label{sec:software-defined-networking}
@@ -106,15 +108,16 @@ this approach is the high overhead that causes it to scale
 poorly~\cite{benzekki2016}.
 
 Several techniques for distributing the load on the controller server have been
-tried.~\cite{oktian2017, dixit2013} Some authors have investigated using end
+tried~\cite{oktian2017, dixit2013}. Some authors have investigated using end
 nodes, instead of routers and switches, as SDN rule caches to alleviate this
-problem~\cite{taylor2017, chuluundorj2019}.  In this approach, each host caches
+problem~\cite{taylor2017, chuluundorj2019}. In this approach, each host caches
 rules from the SDN controller and makes routing decisions about its own network
-flows.
+flows. \textsc{Appjudicator} follows this strategy, implementing a host-based
+SDN agent and extending the OpenFlow protocol with more context.
 
 Taylor ~\etal explores the feasibility of separating the SDN controller from the
 local network entirely, connecting instead to a cloud-based
-controller.~\cite{taylor2017shue} They were able to achieve acceptable overhead
+controller~\cite{taylor2017shue}. They were able to achieve acceptable overhead
 for 90\% of end users by selecting low-latency public cloud locations.
 
 Others have investigated the potential for improving SDN's capabilities by
@@ -123,7 +126,7 @@ attempts. SDN rules could be more powerful and granular with more metadata, for
 example a network flow's initiating application.
 
 Qazi \etal attempts to classify traffic from Android phones using machine
-learning on an SDN switch.~\cite{qazi2013}. Their approach achieves 94\%
+learning on an SDN switch~\cite{qazi2013}. Their approach achieves 94\%
 accuracy in the top 40 Android applications. By utilizing the phone itself as
 an SDN agent \textsc{Appjudicator} is able to identify a network flow's
 originating application with 100\% accuracy.
@@ -135,12 +138,15 @@ Several previous applications have used an Android smartphone as a SDN agent and
 rule cache. Hong~\etal explores the tools available to organizations for
 managing BYOD Android devices and proposes a system for applying SDN policies to
 these phones~\cite{hong2016}. They were able to apply app-specific rules that
-were aware of device context such as GPS location with minimal overhead.
+were aware of device context such as GPS location with low overhead. However,
+this work does not take advantage of the many extra sources of context the
+mobile device can provide.
 
-While Hong~\etal \cite{hong2016} was aimed at corporate users, HanGuard
-investigated using SDN principles to protect Internet of things (IoT) devices in
-home networks~\cite{demetriou2017}. Their application provided tools for users
-to easily define SDN rules for IoT apps, IoT devices, and users.
+While Hong~\etal \cite{hong2016} and \textsc{Appjudicator} are both aimed at
+corporate users, HanGuard investigated using SDN principles to protect Internet
+of things (IoT) devices in home networks~\cite{demetriou2017}. Their application
+provided tools for users to easily define SDN rules for IoT apps, IoT devices,
+and users.
 
 While each of these areas has been extensively researched alone, only
 Chuluundorj~\cite{chuluundorj2019} and Kwon~\etal \cite{kwon2011} have
@@ -153,3 +159,4 @@ that we cannot modify the operating system kernel as the Windows solutions do,
 and must abide by Android's strict permissions system.
 
 \newpage
+
