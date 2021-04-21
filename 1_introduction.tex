@@ -17,21 +17,23 @@ concerns when integrating them into secure network environments.
 For example, smartphones have been targeted by malware specifically designed to
 infiltrate corporate networks~\cite{kan2016}, such as ``Dresscode'', which
 disguises itself as a legitimate app in order to steal data and add infected
-devices to a botnet~\cite{palmer2016}. The ``xHelper'' malware can automatically
-download and install arbitrary software specified by an attacker, and persists
-even after a factory reset~\cite{vijayan2020}. A black market
-malware-as-a-service model called Black Rose Lucy even offers control of
-infected Android devices to paying customers, potentially giving any malicious
-actor an entry point to a secure network~\cite{wong2018}.
+devices to a botnet~\cite{palmer2016}. The ``xHelper'' malware targets phones
+used for both personal and professional purposes, and can automatically download
+and install arbitrary software specified by an attacker, and persists even after
+a factory reset~\cite{vijayan2020}. A black market malware-as-a-service model
+called Black Rose Lucy even offers control of infected Android devices to paying
+customers, potentially giving any malicious actor an entry point to a secure
+network~\cite{wong2018}.
 
 If mobile devices are to have access to sensitive corporate network
 infrastructure, either from home or from work, administrators need new tools to
 monitor and control their network connections. These tools need to be powerful
 enough to detect when network connections are made by Trojan horse malware that
 is disguised as a benign app, while being still being easy to deploy and manage.
-For example, some existing solutions require recompiling Android's kernel or
-gaining root access to their device, which is impractical for most users and
-exposes them to additional security risks~\cite{google2020}.
+For example, similar solutions on Windows~\cite{chuluundorj2019, kwon2011}
+require administrator privileges or the ability to modify the kernel. This is
+impractical for most users and exposes them to additional security
+risks~\cite{google2020}.
 
 % Approach
 
@@ -67,14 +69,11 @@ security.
 
 The costs of our system include the resource overhead of running the app (CPU
 cycles, battery power, etc.) and the cost of installing, running, and
-maintaining the controller server. We expect these costs to be a relatively
+maintaining the controller server. We found these costs to be a relatively
 small addition to existing resources. The app's UI monitoring and VPN service
 also add some latency to network requests performed on the phone. In our
-experiments \textsc{Appjudicator} added less than 100 milliseconds of total
-latency to new TCP connections in 97\% of trials. UDP connections and subsequent
-TCP requests to established connections have even less added latency.
-
-% TODO can we justify this latency?
+experiments \textsc{Appjudicator} added less than 10 milliseconds of total
+latency to 95\% packets processed by the app.
 
 % Competition
 
@@ -97,21 +96,41 @@ example, we are constrained by Android's rigid permissions system, we do not
 have root access to the device, and we cannot modify the kernel. These
 restrictions require novel techniques and systems.
 
-Our work focuses on exploring the following research question: 
+This work focuses on implementing a proof of concept networking tool for
+Android. We explore the following research question:
 \begin{quote}
 	\textit{Can UI interaction and network activity be used to successfully
 		predict and associate network flows with user actions on Android devices
 		with acceptable overhead?}
 \end{quote}
+We leave the potential applications of this data for network security to future
+work, instead examining the effectiveness of our strategy for differentiating
+user-initiated flows and the system's CPU, memory, and energy costs.
 
 To investigate we perform a study with several popular Google Play apps to
-determine whether \textsc{Appjudicator} can successfully detect and block
-suspicious non-user-initiated network requests. % TODO insert results
-We also measure the total added latency of the VPN and SDN agent, finding that
-our system adds less than 10 milliseconds of total end-to-end latency to 95\% of
-intercepted packets. On a standard 60 Hz screen this latency is imperceptible to
-users.
+determine whether \textsc{Appjudicator} can successfully detect
+non-user-initiated network requests. We found that even with a simple
+timing-based strategy the app could successfully associate network flows with
+the UI interaction that initiated them. We also measure the total added latency
+of the VPN and SDN agent, finding that our system adds less than 10 milliseconds
+of total end-to-end latency to 95\% of intercepted packets. On a standard 60 Hz
+screen this latency is imperceptible to users.
 
-% TODO add more results
+In summary, this paper makes the following contributions:
+
+\begin{itemize}
+	\item We propose a novel system for associating network flows with user
+		interface context on Android. Unlike existing solutions our application
+		does not require root access to the device, and integrates with other
+		SDN infrastructure using the OpenFlow protocol.
+	\item We design and implement a practical prototype of the system on
+		Android, called \textsc{Appjudicator}.
+	\item We evaluate the performance and efficacy of \textsc{Appjudicator} on
+		real and virtual Android devices with real-world apps. The results show
+		that this prototype has a low impact on CPU, memory, and battery, usage,
+		and adds a minimal amount of total latency to network communications
+		while achieving its goal of differentiating user-initiated flows and
+		associating flows with UI context.
+\end{itemize}
 
 \newpage
