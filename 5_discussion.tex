@@ -74,15 +74,14 @@ Our strategy for defining user-generated flows effective enough as a rough
 estimate of whether a user is interacting with a particular app, but it is not
 perfect. A flow from an application is considered user-initiated if a user made
 any UI interaction with that app in the past two seconds, so malicious network
-flows could be allowed if they happen to be sent within this time period.
-However, to consistently take advantage of this flaw a malicious app would have
-to install its own accessibility service to monitor UI interactions, which
-requires a user's explicit manual approval. It would be very difficult for
-malware to exploit this vulnerability while still remaining covert. To mitigate
-this issue, future work could focus on improving how we define a flow as
-user-initiated. For example, a system for detecting user intent similar to the
-one presented by Shirley and Evans~\cite{shirley2008} could be added to
-\textsc{Appjudicator}.
+flows could be allowed if they happen to be sent within this time period. A
+malicious app with knowledge of this system could also generate fake
+accessibility events to give the impression that a user is interacting with an
+app. To mitigate this issue, future work could focus on improving how we define
+a flow as user-initiated. For example, a system for detecting user intent
+similar to the one presented by Shirley and Evans~\cite{shirley2008} could be
+added to \textsc{Appjudicator}. A system like this would make it easier to
+detect whether whether the accessibility events we receive are legitimate.
 
 \subsection{Conclusion}
 \label{sec:conclusion}

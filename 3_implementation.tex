@@ -181,6 +181,9 @@ an app, such as a button being pressed, a view being swiped, or the focus
 changing~\cite{accessibilityserviceguide}. An accessibility service can specify
 the particular app packages and event types it wants to receive, but
 \textsc{Appjudicator} registers to receive all event types from all packages.
+The accessibility event is fired by a view (the basic building block of Android
+user interfaces), and passed to interested parties by the operating
+system~\cite{googledevelopersevent}.
 
 The accessibility event object contains some context about the UI interaction,
 including the type of UI element, the type of interaction (\textit{e.g.} click,
@@ -201,17 +204,14 @@ information about all views instead by passing the
 \texttt{FLAG\_INCLUDE\_NOT\_IMPORTANT\_VIEWS} flag to the accessibility
 service~\cite{accessibilityserviceguide}.
 
-% TODO add example output
-
 These accessibility events are triggered for almost every type of UI interaction,
 including clicks, swipes, long presses, and even input from devices like virtual
-or physical keyboard. However, events fired from apps that do not use Android's
+or physical keyboard.
+
+However, events fired from apps that do not use Android's
 UI libraries do not provide as much context. For example, we cannot get layout
 hierarchy information from an app that renders its UI in OpenGL or some other
-graphics platform~\cite{accessibilityserviceguide}.
-
-% TODO include an example of an accessibility event and layout hierarchy as a
-% diagram or text. Show layout XML and the info we get side-by-side.
+graphics platform~\cite{accessibilityserviceguide}. 
 
 \subsubsection{Asynchronous Event Handling}
 \label{sec:asynchronous-event-handling}
@@ -225,11 +225,15 @@ our goal of adding minimal latency. However, this asynchronous processing also
 means an app may continue generating accessibility events while an earlier event
 is still being processed, so we must make sure to handle events efficiently.
 
-There is theoretically a race condition if a \texttt{packet\_in} message is
-ready to be sent before the most recent UI interaction is finished processing.
-In practice, however, queuing packets, performing a SDN flow table lookup, and
-preparing a \texttt{packet\_in} message takes longer than the single hash map
-lookup and linked list insertion the accessibility service performs.
+There is theoretically a race condition if a \texttt{packet\_in}
+message\footnote{A \texttt{packet\_in} message is how the app notifies the
+	company's SDN controller that it received a flow and would like instructions
+	on what to do with it. SDN is explained in more detail in
+	Section~\ref{sec:openflow-protocol}.} is ready to be sent before the most
+recent UI interaction is finished processing.  In practice, however, queuing
+packets, performing a SDN flow table lookup, and preparing a \texttt{packet\_in}
+message takes longer than the single hash map lookup and linked list insertion
+the accessibility service performs.
 
 \subsubsection{Identifying UI Elements}
 \label{sec:identifying-ui-elements}
@@ -242,7 +246,7 @@ report view IDs in accessibility nodes we need to pass the
 \texttt{FLAG\_REPORT\_VIEW\_IDS} flag to the accessibility service. We use the
 initiating element's resource ID and resort to a selector based on the element's
 position in the XML UI tree if the ID is missing or non-unique. This allows us
-to precisely correlate a network flow with the particular UI interaction that
+to precisely correlate a network flow with the particular UI element that
 initiated it. These selectors should also be relatively stable across multiple
 application launches because they will not change as long as the app's UI
 structure remains constant. Developers rarely make large structural changes to
