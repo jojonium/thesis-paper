@@ -121,10 +121,11 @@ In summary, this paper makes the following contributions:
 \begin{itemize}
 	\item We propose a novel system for associating network flows with user
 		interface context on Android. Unlike existing solutions our application
-		does not require root access to the device, and integrates with other
-		SDN infrastructure using the OpenFlow protocol.
+		does not require root access to the device implements a host-based SDN
+		agent.
 	\item We design and implement a practical prototype of the system on
-		Android, called \textsc{Appjudicator}.
+		Android, called \textsc{Appjudicator}, which integrates with other SDN
+		infrastructure using a subset of the OpenFlow protocol.
 	\item We evaluate the performance and efficacy of \textsc{Appjudicator} on
 		real and virtual Android devices with real-world apps. The results show
 		that this prototype has a low impact on CPU, memory, and battery, usage,
