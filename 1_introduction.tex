@@ -3,14 +3,16 @@
 
 % Need
 
-Current corporate network administration tools have little insight into the
-connections made by employee-owned smartphones, especially in ``Bring Your Own
-Device'' (BYOD) scenarios that are becoming increasingly common. It is difficult
-for large organizations to maintain security across their networks with such
-little knowledge about, and control over, these mobile devices. The fact that
-these devices enter and exit the corporate network and connect to other
-networks, such their cellular data provider's, on a daily basis complicates this
-issue. Smartphones have a wide range of powerful networking and computational
+Paradigms in which employees use their own personal smartphones for work
+purposes are becoming more widespread as practices like work from home and
+``Bring Your Own Device'' (BYOD) become more popular. Current corporate network
+administration tools have little insight into the connections made by
+employee-owned smartphones in these scenarios. It is difficult for large
+organizations to maintain security across their networks with such little
+knowledge about, and control over, these mobile devices. The fact that these
+devices enter and exit the corporate network and connect to other networks, such
+their cellular data provider's, on a daily basis complicates this issue.
+Smartphones have a wide range of powerful networking and computational
 abilities, and are typically privately owned by employees, which raises further
 concerns when integrating them into secure network environments.
 
@@ -27,13 +29,14 @@ network~\cite{wong2018}.
 
 If mobile devices are to have access to sensitive corporate network
 infrastructure, either from home or from work, administrators need new tools to
-monitor and control their network connections. These tools need to be powerful
-enough to detect when network connections are made by Trojan horse malware that
-is disguised as a benign app, while being still being easy to deploy and manage.
-For example, similar solutions on Windows~\cite{chuluundorj2019, kwon2011}
-require administrator privileges or the ability to modify the kernel. This is
-impractical for most users and exposes them to additional security
-risks~\cite{google2020}.
+monitor and control their network connections. These tools could provide the
+information needed to monitor network activity to for malware, provision network
+resources based on which apps are being used, or debug complex distributed
+applications. However, if the tools are not easy to deploy and manage it will be
+difficult to convince end users to adopt them.  For example, similar solutions
+on Windows~\cite{chuluundorj2019, kwon2011} require administrator privileges or
+the ability to modify the kernel. This is impractical for most users to do on a
+smartphone, and exposes them to additional security risks~\cite{google2020}.
 
 % Approach
 
@@ -42,19 +45,19 @@ To solve these issues on Android devices, we propose a new app called
 software-defined networking (SDN) principles to determine whether network flows
 are legitimately user-initiated. The app has two components: an accessibility
 service that monitors UI interaction and a VPN service that intercepts network
-flows and acts as an OpenFlow agent. We use these two sources of information to
-correlate network flows with user interaction in a way that is difficult for
-malware to evade, since it cannot physically interact with hardware input
-devices.
+flows. We use these two sources of information to correlate network flows with
+user interaction, and provide this information to network administrators by
+acting as a host-based SDN agent.
 
 The UI monitoring component will use Android's accessibility API to
 asynchronously record physical hardware inputs, such as tapping or swiping the
 touch screen. This gives administrators the ability to accurately distinguish
-between human-driven and automated network requests.  Meanwhile, the VPN service
+between human-driven and automated network requests. Meanwhile, the VPN service
 acts as an OpenFlow agent and rule cache, giving administrators fine-grained
 control over which connections the device is allowed to make. Flows are
 augmented with context from the specific device and application, and can be
-elevated to the organization's SDN controller if necessary.
+elevated to the organization's SDN controller along with UI context data if
+necessary.
 
 % Benefit over cost
 
@@ -107,14 +110,14 @@ We leave the potential applications of this data for network security to future
 work, instead examining the effectiveness of our strategy for differentiating
 user-initiated flows and the system's CPU, memory, and energy costs.
 
-To investigate we perform a study with several popular Google Play apps to
-determine whether \textsc{Appjudicator} can successfully detect
-non-user-initiated network requests. We found that even with a simple
-timing-based strategy the app could successfully associate network flows with
-the UI interaction that initiated them. We also measure the total added latency
-of the VPN and SDN agent, finding that our system adds less than 10 milliseconds
-of total end-to-end latency to 95\% of intercepted packets. On a standard 60 Hz
-screen this latency is imperceptible to users.
+To investigate we perform a study with several real apps to determine whether
+\textsc{Appjudicator} can successfully detect user-initiated network
+requests. We found that even with a simple timing-based strategy the app could
+successfully associate network flows with the UI interaction that initiated
+them. We also measure the total added latency of the VPN and SDN agent, finding
+that our system adds less than 14 milliseconds of total end-to-end latency to
+95\% of intercepted packets. On a standard 60 Hz screen this latency is
+imperceptible to users.
 
 In summary, this paper makes the following contributions:
 
