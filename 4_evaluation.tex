@@ -89,31 +89,32 @@ flow, so any latency added by it would be especially noticeable.
 To measure the effect of \textsc{Appjudicator} on network communication speed,
 we measure the total additional latency added by the app. We measure added
 latency in all incoming and outgoing packets, but focus on the first packet of
-new TCP connections in particular, because these require the most processing
-time.
+each new flow in particular, because these require the most processing time.
 
 For this test, we run the app in an Android virtual machine simulating a Google
-Pixel 4, on API level 30. We use POX's \texttt{forwarding.hub} module as an
-OpenFlow controller. In this mode, the controller responds to every query with
-an instruction to forward the flow to its destination~\cite{mccauley2015}. Local
-network latency is not a part of this test, so the controller server runs on the
-same physical host as the Android virtual machine. The two components still
-communicate over a regular TCP connection. The SDN agent starts with an empty
-table of flow rules, so it must send a \texttt{packet\_in} to the controller for
-every new flow. \textsc{Appjudicator} caches responses from the controller as
-new rules, so subsequent connections to the same IP address and port over the
-same protocol will not trigger a \texttt{packet\_in}.
+Pixel 4, on API level 30. The controller server is a simple Python script that
+responds to every \texttt{packet\_in} message with a \texttt{packet\_out}
+message instructing the agent to forward the flow.\footnote{This test is
+	designed to measure \textsc{Appjudicator}'s efficiency only. In a production
+	environment, a more complex controller server would likely add a
+	non-negligible amount of delay while it processes a \texttt{packet\_in}.}
+This controller is run on a separate machine on the same local network as the
+phone. The average round-trip ping time between the phone and the controller
+server was 0.950 milliseconds.
+
+In the test, the SDN agent starts with an empty table of flow rules, so it must
+send a \texttt{packet\_in} to the controller for every new flow. After the agent
+gets a response from the controller, all subsequent packets in the same flow
+follow the action specified by the response.
 Section~\ref{sec:openflow-protocol} describes the OpenFlow protocol in more
 detail.
 
-We focus particularly on the added latency of the first packet in a TCP
-connection because this is where the system does the most processing. The start
-of a new flow requires an SDN flow table lookup and possibly communication with
-the SDN controller. Creating a new TCP connection requires allocating more
-memory than a new UDP connection because metadata such as the current connection
-state and most recent sequence number need to be stored in a lookup table.
-Subsequent packets in a TCP flow, and all packets in UDP flows require less
-processing overhead.
+We focus particularly on the added latency of the first packet in a new flow
+because this is where the system does the most processing. The start of a new
+flow requires an SDN flow table lookup and possibly communication with the SDN
+controller. Creating a new TCP or UDP connection requires allocating memory for
+queued packets and metadata, and inserting this data in a lookup table.
+Subsequent packets in the same flow will require less processing overhead.
 
 We configure the app to log a timestamp when a packet is first intercepted by
 the VPN. \textsc{Appjudicator}'s VPN service parses the packet and determines
@@ -131,38 +132,55 @@ illustrates this process.} After all of \textsc{Appjudicator}'s processing is
 finished, a second timestamp is logged. The earlier timestamp is the time the
 packet would have been sent to the network without our system's interference,
 and the second timestamp is the time it actually was sent. The difference is the
-total latency added by the app.
-
-In this test the app is configured to write the recorded time differences for
-all packets to a file. Time differences for TCP SYN packets are also logged to
-another file. Timestamps are created using Android's
+total latency added by the app. We also log the overall round-trip time of first
+of each flow, from when the first packet is sent to when its response is
+received, so we can compare this to the time added by \textsc{Appjudicator}. All
+timestamps are created using Android's
 \texttt{SystemClock.elapsedRealtimeNanos()} method, which gets the number of
 nanoseconds since the system was booted~\cite{androidsystemclock}.
 
 \subsubsection{Latency Test Results}
 \label{sec:latency-test-results}
 
-There were 1,107 packet timing traces logged during the sampling period, of
-which five were removed as outliers, leaving 1,102 data points. The average added
-latency among all packets was 5.14 milliseconds, with a standard deviation of
-3.44 milliseconds.
+There were 1,162 packet timing traces logged during the sampling period, of
+which four were removed as outliers, leaving 1,158 data points. The average
+added latency among all packets was 6.17 milliseconds, with a standard deviation
+of 6.20 milliseconds.
 
-During the TCP SYN sampling period 181 timing traces were logged, of which two
-were removed as outliers, leaving 179 data points. These packets had higher
-added latency than others, and their added latency varied more. The average
-added latency among TCP SYN packets was 14.64 milliseconds, with a standard
-deviation of 16.77 milliseconds.
-
-Outlier traces, which recorded a total added latency of greater than 150
-milliseconds. This is more than 10 times the TCP SYN average latency, and over
-29 times the average latency of all packets. Because these outliers are so rare,
-making up less than 0.5\% of all packets, they may have been caused by poor
-network conditions.
-
-In our sample, 95\% of packets were processed with less than 10 milliseconds
-of total added delay. On a 60 Hz display one frame lasts 16 milliseconds, so any
-delay less than this is imperceptible to users.
+During the sampling period 212 timing traces were logged for the first packet of
+new flows, of which one was removed as an outlier, leaving 212 data points.
+These packets had higher added latency than others, and their added latency
+varied more. The average added latency among these packets was 12.12
+milliseconds, with a standard deviation of 7.36 milliseconds.
 Figure~\ref{fig:added-delay-chart} charts the full results of this test.
+
+\begin{figure}[h]
+    \centering
+	\includegraphics[width=\textwidth]{added-delay.png}
+	\caption{Total latency added by \textsc{Appjudicator}}
+	\label{fig:added-delay-chart}
+\end{figure}
+
+Traces which recorded a total added latency of greater than 150 milliseconds
+were considered outliers. This is more than 12 times the new flow average
+latency, and over 24 times the average latency of all packets. Because these
+outliers are so rare, making up less than 0.5\% of all packets, they may have
+been caused by poor network conditions.
+
+In our sample, 95\% of packets were processed with less than 14 milliseconds
+of total added delay. On a 60 Hz display one frame lasts 16 milliseconds, so any
+delay less than this is imperceptible to users. In our sampling period, the
+latency added by our system was usually small compared to the total round-trip
+time of a new flow. Figure~\ref{fig:delay-vs-rtt} compares the delay added by
+\textsc{Appjudicator} with the total RTT of flows.
+
+\begin{figure}[h]
+    \centering
+	\includegraphics[width=\textwidth]{delay-vs-rtt.png}
+	\caption{The delay added by our system even for new flows is a relatively
+		small piece of the total network latency of these flows.}
+	\label{fig:delay-vs-rtt}
+\end{figure}
 
 In measuring the timing of individual functions we found that the initial VPN
 overhead (reading, processing, and queuing packets) took an average of 44
@@ -171,15 +189,9 @@ microseconds with 10 initial rules, although this will increase as more flow
 table entries are added. Accessibility event lookup took an average of 63
 microseconds. By far the biggest contributor to overall latency in our trial was
 sending \texttt{packet\_in} messages and waiting for a response from the
-controller. The SDN agent waited 2448 microseconds on average for a
-\texttt{packet\_out} message.
-
-\begin{figure}[h]
-    \centering
-	\includegraphics[width=\textwidth]{added-delay.png}
-	\caption{Total latency added by \textsc{Appjudicator}}
-	\label{fig:added-delay-chart}
-\end{figure}
+controller. The SDN agent waited 2963 microseconds on average for a
+\texttt{packet\_out} message, which includes an average of 950 microseconds of
+network travel time between the phone and the controller server.
 
 \subsubsection{Measuring Resource Overhead}
 \label{sec:measuring-resource-overhead}
