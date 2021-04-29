@@ -8,12 +8,12 @@ our work to answer our original research question.
 \subsection{Implications and Applications}
 \label{sec:implications-and-applications}
 
-\textsc{Appjudicator} was designed with an enterprise BYOD setting in mind, as a
-tool to give system administrators more control over employee-owned smartphones.
-Our app would work with an OpenFlow SDN controller to enforce company policy
-rules. With some modification \textsc{Appjudicator} could also be used in other
+\textsc{Appjudicator} was designed for an enterprise BYOD setting, as a tool to
+give system administrators more control over employee-owned smartphones.  Our
+app would work with an OpenFlow SDN controller to enforce company policy rules.
+With some modification, \textsc{Appjudicator} could also be used in other
 applications. For example, our app could adapted for use by personal users in
-residential networks, and connected to a cloud-based SDN controller like the one
+residential networks, connected to a cloud-based SDN controller like the one
 proposed by Taylor~\etal\cite{taylor2017shue}
 
 The use of \textsc{Appjudicator} in an enterprise network could raise some
@@ -49,7 +49,7 @@ mobile devices. A custom controller could also empower system administrators to
 write fine-grained, context-aware SDN policies. 
 
 Further work could also be done to mitigate some of the limitations discussed in
-Section~\ref{sec:limitations}. Because our work is a proof of concept little
+Section~\ref{sec:limitations}. Because our work is a proof of concept, little
 development time was spent on optimization or graphical polish. A more
 user-friendly UI and settings menu could be implemented for the app. Our latency
 test results (described in Section~\ref{sec:latency-test-results}) indicate that
@@ -59,40 +59,40 @@ optimizations.
 
 Some researchers have investigated SDN architectures that involve multiple
 distributed controller servers.~\cite{dixit2013, oktian2017}
-\textsc{Appjudicator} currently only connects to one statically-defined
+\textsc{Appjudicator} currently connects to only one statically-defined
 controller server, but could be extended in future work to connect to several.
 
 \subsection{Limitations}
 \label{sec:limitations}
 
-For ease of development and testing \textsc{Appjudicator} only supports IPv4,
+For ease of development and testing, \textsc{Appjudicator} only supports IPv4,
 and can only handle UDP and TCP as transport layer protocols. This is enough to
 power the vast majority of everyday networking applications, but support could
 be added for IPv6 and other transport layer protocols.
 
-Our strategy for defining user-generated flows effective enough as a rough
-estimate of whether a user is interacting with a particular app, but it is not
-perfect. A flow from an application is considered user-initiated if a user made
-any UI interaction with that app in the past two seconds, so malicious network
-flows could be allowed if they happen to be sent within this time period. A
-malicious app with knowledge of this system could also generate fake
-accessibility events to give the impression that a user is interacting with an
-app. To mitigate this issue, future work could focus on improving how we define
-a flow as user-initiated. For example, a system for detecting user intent
-similar to the one presented by Shirley and Evans~\cite{shirley2008} could be
-added to \textsc{Appjudicator}. A system like this would make it easier to
-detect whether whether the accessibility events we receive are legitimate.
+Our strategy for defining user-generated flows can give a rough estimate of
+whether a user is interacting with a particular app, but it is far from perfect.
+A flow from an application is considered user-initiated if a user made any UI
+interaction with that app in the past two seconds, so malicious network flows
+could be allowed if they happen to be sent within this time period. A malicious
+app with knowledge of this system could also generate fake accessibility events
+to give the impression that a user is interacting with an app. To mitigate this
+issue, future work could focus on improving how we define a flow as
+user-initiated. For example, a system for detecting user intent similar to the
+one presented by Shirley and Evans~\cite{shirley2008} could be added to
+\textsc{Appjudicator}. A system like this would make it easier to detect whether
+whether the accessibility events we receive are legitimate.
 
 \subsection{Conclusion}
 \label{sec:conclusion}
 
-In this thesis we have implemented a host-based SDN agent and UI monitoring
-system on Android. We have demonstrated that these systems can be combined to
-collect network data and UI context, and this data can be used to successfully
+In this thesis, we implemented a host-based SDN agent and UI monitoring system
+on Android. We demonstrated that these systems can be combined to collect
+network data and UI context, and this data can be used to successfully
 distinguish which flows on the device are legitimately user initiated. Our
-experiments show that the system can run in the background with minimal overhead
-to CPU, memory, and battery usage, and adds an acceptably low amount of overall
-end-to-end latency to network operations on the device. Finally, we have
+experiments showed that the system can run in the background with minimal
+overhead to CPU, memory, and battery usage, and adding an acceptably low amount
+of overall end-to-end latency to network operations on the device. Finally, we
 discussed how the application can be used as a network security tool in
 enterprise environments and what future work is required to turn our proof of
 concept into a practical application.
