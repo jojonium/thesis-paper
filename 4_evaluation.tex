@@ -1,11 +1,10 @@
 \section{Evaluation and Results}
 \label{sec:evaluation-and-results}
 
-We seek to evaluate whether \textsc{Appjudicator} is able to successfully
-achieve its goal of distinguishing user-initiated network flows using UI
-context, and whether it can do so with acceptable overhead. To determine whether
-the app accomplishes its goal, we perform a practical analysis and to measure the
-app's resource cost we perform a performance evaluation. We now explain the
+We seek to evaluate whether \textsc{Appjudicator} achieves its goal of
+distinguishing user-initiated network flows using UI context and whether it does
+so with acceptable overhead. For this performance evaluation, we perform a
+practical analysis and measure the app's resource cost. Following are the
 procedures used for each of these experiments and their results.
 
 \subsection{Differentiating User-generated Flows}
@@ -28,8 +27,8 @@ our app's logging to record whether each flow is considered ``user initiated,''
 along with the timing of UI interactions and flow table lookups.
 
 To evaluate the effectiveness of our UI element system for identifying UI
-elements (described in Section~\ref{sec:identifying-ui-elements}), we record
-the proportion of accessibility events in our sampling period came from sources
+elements (described in Section~\ref{sec:identifying-ui-elements}), we record the
+proportion of accessibility events in our sampling period that came from sources
 with a unique resource ID.
 
 \subsubsection{Results}
@@ -37,21 +36,21 @@ with a unique resource ID.
 
 \textsc{Appjudicator} was successful in identifying 100\% of new flows that
 occurred within two seconds of a UI interaction as user initiated. This raises
-the question of how effective this two second cutoff is. Based on our
+the question of how effective this two-second cutoff is. Based on our
 experience, two seconds seems to be generous enough to allow all flows
 associated with the UI interaction to be triggered, without being so lenient
 that unrelated flows are also allowed.
 
 Professional sources generally support this reasoning. Google's developer blog
-recommends two seconds of total page page load time is ``the threshold for
-ecommerce site `acceptability'"~\cite{ohye2010}. Search engine optimization firm
-Semrush writes ``Serve your customers with the page load time they need, a good
-goal being 1--2 seconds''~\cite{bird2020}.
+recommends two seconds of total page load time as ``the threshold for ecommerce
+site `acceptability'"~\cite{ohye2010}. Search engine optimization firm Semrush
+writes, ``Serve your customers with the page load time they need, a good goal
+being 1--2 seconds''~\cite{bird2020}.
 
-Figure~\ref{fig:lookups-after-click} shows illustrates this cutoff. It shows
-four typical page loads in Chrome, with each point in the plot representing a
-new flow made by Chrome. The accessibility event that initiated the page load
-(clicking on a link) occurs at time 0. The dashed gray line shows the two second
+Figure~\ref{fig:lookups-after-click} illustrates this cutoff. It shows four
+typical page loads in Chrome, with each point in the plot representing a new
+flow made by Chrome. The accessibility event that initiated the page load
+(clicking on a link) occurs at time 0. The dashed gray line shows the two-second
 cutoff. All the flows that occurred before this cutoff, within the green shaded
 area, are considered to be user initiated, while flows that occurred after the
 cutoff are not. These flows are likely the result of asynchronous JavaScript
@@ -61,13 +60,13 @@ network calls initiated by the page, not directly by user action.
     \centering
 	\includegraphics[width=\textwidth]{lookups-after-click.png}
 	\caption{The delay between a click event and the new flows that it
-		initiates. The dashed vertical line shows the two second cutoff: flows
+		initiates. The dashed vertical line shows the two-second cutoff: flows
 		before this line (in the green area) are considered to be associated
 		with the click event.}
 	\label{fig:lookups-after-click}
 \end{figure}
 
-In our trial we found that approximately 85\% of accessibility events had a
+In our trial, we found that approximately 85\% of accessibility events had a
 source element with a unique resource ID. Even dynamically-generated UI elements
 often have resource IDs. For example, links in webpages are given IDs generated
 by Chrome. This is good news for our system, because resource IDs are the
@@ -109,11 +108,11 @@ follow the action specified by the response.
 Section~\ref{sec:openflow-protocol} describes the OpenFlow protocol in more
 detail.
 
-We focus particularly on the added latency of the first packet in a new flow
+We focus particularly on the added latency of the first packet in a new flow,
 because this is where the system does the most processing. The start of a new
 flow requires an SDN flow table lookup and possibly communication with the SDN
 controller. Creating a new TCP or UDP connection requires allocating memory for
-queued packets and metadata, and inserting this data in a lookup table.
+queued packets and metadata, and then inserting this data in a lookup table.
 Subsequent packets in the same flow will require less processing overhead.
 
 We configure the app to log a timestamp when a packet is first intercepted by
@@ -125,19 +124,19 @@ performs a flow table lookup, and sends a \texttt{packet\_in} to the SDN
 controller if it fails to find a matching rule. If this is the case, it waits
 for a response from the controller, then performs a \texttt{flow\_mod} operation
 to cache the result as a new rule. Finally the SDN agent instructs the VPN
-service to drop or forward the flow. In this test all flows are allowed, so the
+service to drop or forward the flow. In this test, all flows are allowed, so the
 VPN service removes the packet from its queue and writes it to the correct
 network interface file descriptor.\footnote{Figure~\ref{fig:packet-flow-chart}
-illustrates this process.} After all of \textsc{Appjudicator}'s processing is
-finished, a second timestamp is logged. The earlier timestamp is the time the
+	illustrates this process.} After all of \textsc{Appjudicator}'s processing
+is finished, a second timestamp is logged. The earlier timestamp is the time the
 packet would have been sent to the network without our system's interference,
 and the second timestamp is the time it actually was sent. The difference is the
-total latency added by the app. We also log the overall round-trip time of first
-of each flow, from when the first packet is sent to when its response is
-received, so we can compare this to the time added by \textsc{Appjudicator}. All
-timestamps are created using Android's
-\texttt{SystemClock.elapsedRealtimeNanos()} method, which gets the number of
-nanoseconds since the system was booted~\cite{androidsystemclock}.
+total latency added by the app. We also log the overall round-trip time of each
+flow, from when the first packet is sent to when its response is received, so we
+can compare this to the time added by \textsc{Appjudicator}. All timestamps are
+created using Android's \texttt{SystemClock.elapsedRealtimeNanos()} method,
+which returns the number of nanoseconds since the system was
+booted~\cite{androidsystemclock}.
 
 \subsubsection{Latency Test Results}
 \label{sec:latency-test-results}
@@ -147,8 +146,8 @@ which four were removed as outliers, leaving 1,158 data points. The average
 added latency among all packets was 6.17 milliseconds, with a standard deviation
 of 6.20 milliseconds.
 
-During the sampling period 212 timing traces were logged for the first packet of
-new flows, of which one was removed as an outlier, leaving 212 data points.
+During the sampling period, 212 timing traces were logged for the first packet
+of new flows, of which one was removed as an outlier, leaving 212 data points.
 These packets had higher added latency than others, and their added latency
 varied more. The average added latency among these packets was 12.12
 milliseconds, with a standard deviation of 7.36 milliseconds.
@@ -161,18 +160,18 @@ Figure~\ref{fig:added-delay-chart} charts the full results of this test.
 	\label{fig:added-delay-chart}
 \end{figure}
 
-Traces which recorded a total added latency of greater than 150 milliseconds
-were considered outliers. This is more than 12 times the new flow average
-latency, and over 24 times the average latency of all packets. Because these
-outliers are so rare, making up less than 0.5\% of all packets, they may have
-been caused by poor network conditions.
+Traces which recorded a total added latency greater than 150 milliseconds were
+considered outliers. This is more than 12 times the new flow average latency,
+and over 24 times the average latency of all packets. Because these outliers are
+so rare, making up less than 0.5\% of all packets, they may have been caused by
+poor network conditions.
 
-In our sample, 95\% of packets were processed with less than 14 milliseconds
-of total added delay. On a 60 Hz display one frame lasts 16 milliseconds, so any
+In our sample, 95\% of packets were processed with less than 14 milliseconds of
+total added delay. On a 60 Hz display, one frame lasts 16 milliseconds, so any
 delay less than this is imperceptible to users. In our sampling period, the
 latency added by our system was usually small compared to the total round-trip
-time of a new flow. Figure~\ref{fig:delay-vs-rtt} compares the delay added by
-\textsc{Appjudicator} with the total RTT of flows.
+time (RTT) of a new flow. Figure~\ref{fig:delay-vs-rtt} compares the delay added
+by \textsc{Appjudicator} with the total RTT of flows.
 
 \begin{figure}[h]
     \centering
@@ -182,7 +181,7 @@ time of a new flow. Figure~\ref{fig:delay-vs-rtt} compares the delay added by
 	\label{fig:delay-vs-rtt}
 \end{figure}
 
-In measuring the timing of individual functions we found that the initial VPN
+In measuring the timing of individual functions, we found that the initial VPN
 overhead (reading, processing, and queuing packets) took an average of 44
 microseconds. Looking up flows in the flow table took an average of 53
 microseconds with 10 initial rules, although this will increase as more flow
@@ -204,10 +203,10 @@ Profiler~\cite{androidprofiler}.
 
 This test was performed twice, first on an Android virtual machine simulating a
 Google Pixel 4, on API level 30, and second on a physical Google Pixel 3, also
-on API level 30. We ran the app the accessibility service, VPN service, and SDN
-agent all enabled while recording its CPU, memory, and energy usage with Android
-Studio's Profiler. Each test lasted for 30 minutes, during which time we used
-various other apps including Chrome, Termux, and F-Droid while
+on API level 30. We ran the app with the accessibility service, VPN service, and
+SDN agent all enabled while recording its CPU, memory, and energy usage with
+Android Studio's Profiler. Each test lasted 30 minutes, during which time we
+used various other apps including Chrome, Termux, and F-Droid while
 \textsc{Appjudicator} ran in the background.
 
 During the virtual trial, \textsc{Appjudicator}'s memory usage remained
