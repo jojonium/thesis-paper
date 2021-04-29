@@ -37,8 +37,8 @@ running on the same phone rather than a remote server. The UI-monitoring
 component implements Android's \texttt{AccessibilityService}
 API~\cite{googledevelopers2020}, and the SDN agent implements a subset of the
 OpenFlow 1.0 switch standard~\cite{mckeown2008}. Each of these components work
-together to correlate network flows with a UI interaction (or lack thereof) that
-initiated them, and elevate suspicious flows to the SDN controller. We now
+together to correlate network flows with a UI interaction (if any) that
+initiated them, and to elevate suspicious flows to the SDN controller. We now
 describe each of these components and explain how they work together.
 
 \subsection{VPN Service}
@@ -46,11 +46,12 @@ describe each of these components and explain how they work together.
 
 The networking component of \textsc{Appjudicator} utilizes Android's built-in
 API for redirecting network traffic, the
-\texttt{VpnService}~\cite{googledevelopers2020vpn}. However, rather than connect
-to a remote VPN server, we connect to a simple server running locally on the
-device. We register a new VPN connection using this API and prompt the user to
-connect to it. This routes all the device's traffic through our service, which
-captures and logs packets before forwarding them along to their destination.
+\texttt{VpnService}~\cite{googledevelopers2020vpn}. However, rather than
+connecting to a remote VPN server, we connect to a simple server running locally
+on the device. We register a new VPN connection using this API and prompt the
+user to connect to it. This routes all the device's traffic through our service,
+which captures and logs packets before forwarding them along to their
+destination.
 
 Once activated, the VPN service runs in the background and receives packets from
 the operating system through a \texttt{ParcelFileDescriptor} instance that can
@@ -64,8 +65,8 @@ Java sockets.
 It is normally the app's responsibility to encrypt data being transferred to the
 VPN gateway~\cite{vpnguide}, but this is unnecessary in \textsc{Appjudicator}
 because both client and server are running on the same device. We benefit from
-reduced computational resource consumption and energy use from from not having
-to encrypt and decrypt packets.
+the reduced computational resource consumption and energy use that result from
+not having to encrypt and decrypt packets.
 
 \subsubsection{Deconstructing Flows}
 \label{sec:deconstructing-flows}
@@ -82,7 +83,7 @@ source and destination ports, payload size, initiating application, and full
 packet payload, all of which can be used to enforce fine-grained SDN rules.
 
 \textsc{Appjudicator} associates an app with the flows it created.  On Android
-API versions Q and later we can use the \texttt{ConnectivityManager} to query
+API versions Q and later, we can use the \texttt{ConnectivityManager} to query
 the operating system for which user ID owns a particular flow. Because each app
 has a different user ID in Android, we can then use the \texttt{packageManager}
 to look up the package name for that UID as long as we requested the
@@ -129,9 +130,9 @@ in order or drops them.
 Network connections are performance-critical, so we need to ensure that the user
 experience is not blocked waiting for \textsc{Appjudicator} to process network
 requests. The VPN service creates new IO threads using Kotlin's concurrency
-framework so that network processing can be performed off the main thread.
-This allows the VPN service to have a minimal impact on performance, and
-prevents the UI from blocking while waiting for network operations.
+framework so that network processing can be performed off the main thread. This
+allows the VPN service to have a minimal impact on performance and prevents the
+UI from blocking while waiting for network operations.
 
 \subsubsection{Permissions and Security}
 \label{sec:vpn-permissions}
@@ -139,14 +140,14 @@ prevents the UI from blocking while waiting for network operations.
 For the VPN service to work, \textsc{Appjudicator} must request the
 \texttt{INTERNET} permission and declare a service that requests the
 \texttt{BIND\_VPN\_SERVICE} permission in the Android manifest. It must also
-name a route to capture traffic from. We use \texttt{0.0.0.0/0} to capture all
-IPv4 traffic, but this could be changed so the VPN is only used on traffic of a
-particular interface or subnet.
+name a route from which to capture traffic. We use \texttt{0.0.0.0/0} to capture
+all IPv4 traffic, but this could be changed so the VPN is only used on traffic
+of a particular interface or subnet.
 
 After the app is installed, the VPN service can be started or stopped directly
 from it. \textsc{Appjudicator} provides simple buttons to do this, or it can be
 configured to connect to the VPN automatically on startup. The service can also
-be stopped or disabled from Android's settings menu for security reasons.
+be stopped or disabled from Android's Settings menu for security reasons.
 
 There is one kind of traffic we never want to block: communications between the
 SDN agent and controller. The SDN agent uses the \texttt{VpnService.protect()}
@@ -158,15 +159,14 @@ make sure this traffic is not intercepted by the VPN.
 \subsection{Accessibility Service}
 \label{sec:implementation-accessibility-service}
 
-Android's \texttt{AccessibilityService} API is designed for applications for
-individuals with additional needs for tools like screen readers and automated UI
-navigators. By registering an accessibility service with the operating system,
-we can be notified of changes in the UI state of other applications. These
-changes are referred to as accessibility events, and are asynchronously
-triggered by the Android operating system and delivered to the listening
-accessibility service. By using this API, \textsc{Appjudicator}'s UI monitoring
-component can be informed of almost every use interface interaction in any every
-app on the device.
+Android's \texttt{AccessibilityService} API assists individuals who need tools
+like screen readers and automated UI navigators. By registering an accessibility
+service with the operating system, we can be notified of changes in the UI state
+of other applications. These changes are referred to as accessibility events,
+and are asynchronously triggered by the Android operating system and delivered
+to the listening accessibility service. By using this API,
+\textsc{Appjudicator}'s UI monitoring component can be informed of almost every
+use interface interaction in any every app on the device.
 
 Accessibility services can be very dangerous from a security perspective, so they
 must be registered with the operating system and enabled manually. In
@@ -182,18 +182,18 @@ changing~\cite{accessibilityserviceguide}. An accessibility service can specify
 the particular app packages and event types it wants to receive, but
 \textsc{Appjudicator} registers to receive all event types from all packages.
 The accessibility event is fired by a view (the basic building block of Android
-user interfaces), and passed to interested parties by the operating
+user interfaces) and passed to interested parties by the operating
 system~\cite{googledevelopersevent}.
 
 The accessibility event object contains some context about the UI interaction,
-including the type of UI element, the type of interaction (\textit{e.g.} click,
+including the type of UI element, the type of interaction (\textit{e.g.}, click,
 swipe, long press), and descriptive text of the
 element~\cite{accessibilityserviceguide}. Additional information about the UI
 element that initiated the event can be retrieved with the
 \texttt{AccessibilityEvent.getSource()} method. This method allows the app to
 get information about the layout hierarchy, providing context about the
 element's enclosing views and child elements. Because this context information
-could potentially expose private user data the service must declare the
+could potentially expose private user data, the service must declare the
 \texttt{canRetrieveWindowContent} attribute in its configuration XML file. With
 this attribute set, Android will warn the user that the application can retrieve
 the contents of the screen when it is enabled.
@@ -220,10 +220,10 @@ When an accessibility event is generated, the Android operating system passes
 the generated object to the accessibility service's
 \texttt{onAccessibilityEvent()} callback
 asynchronously~\cite{googledevelopers2020}. The event handler does not block the
-user interface because it runs on a different thread, which helps achieve the
-our goal of adding minimal latency. However, this asynchronous processing also
-means an app may continue generating accessibility events while an earlier event
-is still being processed, so we must make sure to handle events efficiently.
+user interface because it runs on a different thread, which helps achieve our
+goal of adding minimal latency. However, this asynchronous processing also means
+an app may continue generating accessibility events while an earlier event is
+still being processed, so we must make sure to handle events efficiently.
 
 There is theoretically a race condition if a \texttt{packet\_in}
 message\footnote{A \texttt{packet\_in} message is how the app notifies the
@@ -242,13 +242,13 @@ Accessibility events do not provide a unique identifier for UI elements, so we
 implement a system inspired by Fazzini~\etal \cite{fazzini2017}. Android UI
 elements, called views, may have an ID, but these are not guaranteed to be
 unique or even present on every view. Note that for the operating system to
-report view IDs in accessibility nodes we need to pass the
+report view IDs in accessibility nodes, we need to pass the
 \texttt{FLAG\_REPORT\_VIEW\_IDS} flag to the accessibility service. We use the
 initiating element's resource ID and resort to a selector based on the element's
 position in the XML UI tree if the ID is missing or non-unique. This allows us
 to precisely correlate a network flow with the particular UI element that
 initiated it. These selectors should also be relatively stable across multiple
-application launches because they will not change as long as the app's UI
+application launches, because they will not change as long as the app's UI
 structure remains constant. Developers rarely make large structural changes to
 app interfaces to follow common human-computer interaction
 guidelines~\cite{norman2013}.
@@ -260,18 +260,18 @@ guidelines~\cite{norman2013}.
 
 \textsc{Appjudicator} declares a service that requests the
 \texttt{BIND\_ACCESSIBILITY\_SERVICE} permission in the Android manifest file.
-This declaration tells Android which class represents the service, and also
-specifies another XML configuration file. The file provides metadata about the
-service, such as listing which types of accessibility events to subscribe to,
-and providing a description of the service's purpose to be shown to the user
-when it is enabled.
+This declaration tells Android which class represents the service and specifies
+another XML configuration file. The file provides metadata about the service,
+such as listing which types of accessibility events to subscribe to, and
+describes the service's purpose to be shown to the user when it
+is enabled.
 
-For security reasons an app cannot enable its own accessibility
+For security reasons, an app cannot enable its own accessibility
 service~\cite{kalysch2018}. To prevent malware from taking advantage of the
 far-reaching permissions of accessibility services, a user must manually enable
 the service in the system settings after being prompted with a dialogue box that
 explains some of the risks involved (see Figure~\ref{fig:a11y-warning}).
-\textsc{Appjudicator} can only point the user toward the settings page, the rest
+\textsc{Appjudicator} can only point the user toward the Settings page; the rest
 must be done manually. A user may have any number of accessibility services
 running at a time, but they must be individually manually enabled and each
 display a persistent notification reminding the user that the service is still
@@ -319,19 +319,18 @@ Like any SDN agent, \textsc{Appjudicator} maintains a cache of rules to apply to
 network flows that pass through it. Rules can match any combination of source or
 destination IP addresses, source or destination ports, and protocol, or have
 wildcards for any of those fields. Each rule contains instructions on what types
-of flows to match and a list of actions to perform on matched flows. We only
-support the minimum allowed set of possible flow actions: forward and drop.
+of flows to match and a list of actions to perform on matched flows. We support
+only the minimum allowed set of possible flow actions: forward and drop.
 
 When a new connection is created, the VPN service notifies the SDN agent and
 queues all packets from that flow until it gets a response from the SDN agent.
 The SDN agent looks up the flow in its flow table. It finds the most specific
-matching rule (\textit{i.e.}, the matching rule that had to use the fewest
-wildcards) and sends its actions back to the VPN service. If no matching rule is
-found in the flow table, the agent elevates the flow to the controller along
-with UI context in a \texttt{packet\_in} message.
-Figure~\ref{fig:packet-flow-chart} illustrates this process.
-Section~\ref{sec:openflow-protocol} provides more information about
-\texttt{packet\_in} and \texttt{packet\_out} messages.
+matching rule (\textit{i.e.}, the matching rule that used the fewest wildcards)
+and sends its actions back to the VPN service. If no matching rule is found in
+the flow table, the agent elevates the flow to the controller along with UI
+context in a \texttt{packet\_in} message.  Figure~\ref{fig:packet-flow-chart}
+illustrates this process.  Section~\ref{sec:openflow-protocol} provides more
+information about \texttt{packet\_in} and \texttt{packet\_out} messages.
 
 \textsc{Appjudicator} will continue forwarding, blocking, or elevating packets
 in other flows while waiting for a response from the SDN controller. The
@@ -346,7 +345,7 @@ to a controller and exchange messages~\cite{openflowspec}. \textsc{Appjudicator}
 implements the minimum subset of the OpenFlow Protocol (OFP). All OpenFlow
 messages are sent over TCP in OpenFlow packets. These packets have a simple
 8-byte header that describes the OpenFlow version, the type of the message, the
-total length of the packet, and transaction ID (see
+total length of the packet, and the transaction ID (see
 Figure~\ref{fig:openflow-header}). Replies to an OpenFlow message have the same
 transaction ID as the request.
 
@@ -357,15 +356,15 @@ transaction ID as the request.
     \label{fig:openflow-header}
 \end{figure}
 
-When the app is launched it opens a new TCP connection to a user-configurable IP
-address or host name that runs the controller server. The controller and switch
-each send a \texttt{hello} message to initiate the connection. The controller
-then queries the switch to see what capabilities and features it supports.
-\textsc{Appjudicator} replies with a \texttt{switch\_features} message
-explaining that it has one physical port (the phone itself) and only supports
-two packet actions: forward and drop. At this point the connection is fully
-established, and the controller and agent can both send messages back and forth.
-Figure~\ref{fig:openflow-handshake} depicts this process.
+When the app is launched, it opens a new TCP connection to a user-configurable
+IP address or host name that runs the controller server. The controller and
+switch each send a \texttt{hello} message to initiate the connection. The
+controller then queries the switch to see what capabilities and features it
+supports.  \textsc{Appjudicator} replies with a \texttt{switch\_features}
+message explaining that it has one physical port (the phone itself) and only
+supports two packet actions: forward and drop. At this point the connection is
+fully established, and the controller and agent can both send messages back and
+forth.  Figure~\ref{fig:openflow-handshake} depicts this process.
 
 \begin{wrapfigure}{R}{0.4\textwidth}
 	\centering
@@ -385,55 +384,56 @@ packet that does not match any flow rules, the agent must ask the controller
 what to do with the packet. We construct a customized version of the standard
 OFP \texttt{packet\_in} message to send to the controller, including UI
 interaction metadata.\footnote{
-	Section~\ref{sec:implementation-accessibility-service} describes how this
+	Section~\ref{sec:implementation-accessibility-service} describes this
 	metadata and how it is obtained.} Figure~\ref{fig:packet-in} shows the
 fields included in these messages. The first eight bytes are the standard OFP
 header. The ``buffer ID'' value will be included in the corresponding response
-so the relevant packet can be identified.  The ``in port'' field do not apply to
-host-based SDN agents like Appjudicator.  The reason field tells the controller
-whether this \texttt{packet\_in} is being sent because of a flow table miss or
-because an action explicitly requested sending the packet to the controller.
+so the relevant packet can be identified.  The ``in port'' field does not apply
+to host-based SDN agents like Appjudicator.  The reason field tells the
+controller whether this \texttt{packet\_in} is being sent because of a flow
+table miss or because an action explicitly requested sending the packet to the
+controller.
 
 Appjudicator has no concept of link layer protocols, so the field for the
-Ethernet header is zeroed out. Following this is the full contents of the IP
-packet in question. Up to this point the \texttt{packet\_in} follows the
+Ethernet header is zeroed out. Following this are the full contents of the IP
+packet in question. Up to this point, the \texttt{packet\_in} follows the
 OpenFlow specification exactly, but after the packet contents we fill the rest
 of the space available (up to 1500 bytes) with UI context, including UI events
 from the same app that initiated the connection, their types, sources, and UI
-hierarchy. IP packets sent to the controller will usually be the first packet of
+hierarchy. IP packets sent to the controller are usually the first packet of
 a flow,\footnote{Such as a TCP SYN packet.} which are normally short, so
-there may often be enough space to include the most relevant UI events.
+there is often enough space to include the most relevant UI events.
 
 The controller responds with a standard \texttt{packet\_out} message, which
 tells the agent which actions to take on the flow. Optionally, the agent can
 remember this response by adding a new flow table rule that matches the same
-flow and applies the same actions so the controller will not have to be queried
-again in the future. This is not part of the OpenFlow specification but is
-feature of Appjudicator.
+flow and applies the same actions, so the controller will not have to be queried
+again in the future. This is not part of the OpenFlow specification, but is a
+feature of \textsc{Appjudicator}.
 
 \subsubsection{Associating Network Flows with Context}
 \label{sec:associating-network-flows-with-context}
 
 When the SDN agent intercepts a new flow to a previously unknown domain, it
-tries to associate it with UI context. The app looks up any accessibility events
+tries to associate it with UI context. The app  looks up any accessibility events
 from the past two seconds that originated from the same app that owns the
 network connection (see Section~\ref{sec:deconstructing-flows}). We found that a
 time interval of two seconds is long enough to catch most user-initiated network
 requests without also associating unrelated UI interactions.
 
-The app looks up any accessibility events that originated from the same package
-that owns the connection that occurred in the two seconds before the flow was
-initiated. If there is no likely initiator of the network flow (such as a button
-press) within the two prior seconds, the flow is considered non-user-initiated.
-The SDN agent includes information about these UI events, including the event
-type and view hierarchy (see Section~\ref{sec:identifying-ui-elements}) with the
-packet as it is elevated to the controller. This UI context should allow for
-more powerful and fine-grained SDN rules.
+If there is no likely initiator of the network flow within the two prior
+seconds, the flow is considered non-user-initiated. The SDN agent includes
+information about these UI events with the packet (including the event type and
+view hierarchy\footnote{Section~\ref{sec:identifying-ui-elements} explains how
+	we construct a view hierarchy in more detail.}) as it is elevated to the
+controller. This UI context should allow for more powerful and fine-grained SDN
+rules.
 
 \begin{figure}[h]
 	\centering
 	\includegraphics[width=0.9\textwidth]{packet-in.png}
-    \caption{Fields in Appjudicator's custom \texttt{packet\_in} message.}
+	\caption{Fields in \textsc{Appjudicator}'s custom \texttt{packet\_in}
+		message.}
     \label{fig:packet-in}
 \end{figure}
 
