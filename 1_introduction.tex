@@ -3,88 +3,88 @@
 
 % Need
 
-Paradigms in which employees use their own personal smartphones for work
-purposes are becoming more widespread as practices like work from home and
-``Bring Your Own Device'' (BYOD) become more popular. Current corporate network
-administration tools have little insight into the connections made by
-employee-owned smartphones in these scenarios. It is difficult for large
-organizations to maintain security across their networks with such little
-knowledge about, and control over, these mobile devices. The fact that these
-devices enter and exit the corporate network and connect to other networks, such
-their cellular data provider's, on a daily basis complicates this issue.
+Many employees are now using their own personal smartphones for work purposes,
+as working from home becomes widespread and companies adopt ``Bring Your Own
+Device'' (BYOD) policies. Existing corporate network administration tools have
+little insight into the connections made by employee-owned smartphones. It is
+difficult for large organizations to maintain security across their networks
+with such little knowledge about, and control over, these mobile devices. The
+fact that these devices enter and exit the corporate network and connect to
+other networks, such as their cellular data provider's, on a daily basis
+complicates this issue.
+
 Smartphones have a wide range of powerful networking and computational
 abilities, and are typically privately owned by employees, which raises further
-concerns when integrating them into secure network environments.
-
-For example, smartphones have been targeted by malware specifically designed to
-infiltrate corporate networks~\cite{kan2016}, such as ``Dresscode'', which
-disguises itself as a legitimate app in order to steal data and add infected
-devices to a botnet~\cite{palmer2016}. The ``xHelper'' malware targets phones
-used for both personal and professional purposes, and can automatically download
-and install arbitrary software specified by an attacker, and persists even after
-a factory reset~\cite{vijayan2020}. A black market malware-as-a-service model
-called Black Rose Lucy even offers control of infected Android devices to paying
+concerns when integrating them into secure network environments. For example,
+smartphones have been targeted by malware specifically designed to infiltrate
+corporate networks~\cite{kan2016}, such as ``Dresscode'', which disguises itself
+as a legitimate app in order to steal data and add infected devices to a
+botnet~\cite{palmer2016}. The ``xHelper'' malware targets phones used for both
+personal and professional purposes; can automatically download and install
+arbitrary software specified by an attacker; and persists even after a factory
+reset~\cite{vijayan2020}. A black market malware-as-a-service model called
+``Black Rose Lucy'' even offers control of infected Android devices to paying
 customers, potentially giving any malicious actor an entry point to a secure
 network~\cite{wong2018}.
 
 If mobile devices are to have access to sensitive corporate network
 infrastructure, either from home or from work, administrators need new tools to
 monitor and control their network connections. These tools could provide the
-information needed to monitor network activity to for malware, provision network
+information needed to monitor network activity for malware, provision network
 resources based on which apps are being used, or debug complex distributed
-applications. However, if the tools are not easy to deploy and manage it will be
-difficult to convince end users to adopt them.  For example, similar solutions
-on Windows~\cite{chuluundorj2019, kwon2011} require administrator privileges or
-the ability to modify the kernel. This is impractical for most users to do on a
-smartphone, and exposes them to additional security risks~\cite{google2020}.
+applications. However, if the tools are not easy to deploy and manage, it will
+be difficult to convince end users to adopt them. For example, similar
+solutions on Windows~\cite{chuluundorj2019, kwon2011} require administrator
+privileges or the ability to modify the kernel. This is impractical for most
+users to do on a smartphone and exposes them to additional security
+risks~\cite{google2020}.
 
 % Approach
 
 To solve these issues on Android devices, we propose a new app called
-\textsc{Appjudicator} which leverages user interface (UI) interaction and
+\textsc{Appjudicator} that leverages user interface (UI) interaction and
 software-defined networking (SDN) principles to determine whether network flows
 are legitimately user-initiated. The app has two components: an accessibility
 service that monitors UI interaction and a VPN service that intercepts network
 flows. We use these two sources of information to correlate network flows with
-user interaction, and provide this information to network administrators by
+user interaction, and we provide this information to network administrators by
 acting as a host-based SDN agent.
 
-The UI monitoring component will use Android's accessibility API to
-asynchronously record physical hardware inputs, such as tapping or swiping the
-touch screen. This gives administrators the ability to accurately distinguish
-between human-driven and automated network requests. Meanwhile, the VPN service
-acts as an OpenFlow agent and rule cache, giving administrators fine-grained
-control over which connections the device is allowed to make. Flows are
-augmented with context from the specific device and application, and can be
-elevated to the organization's SDN controller along with UI context data if
-necessary.
+The UI monitoring component uses Android's accessibility API to asynchronously
+record physical hardware inputs, such as tapping or swiping the touch screen.
+This gives administrators the ability to accurately distinguish between
+human-driven and automated network requests. Meanwhile, the VPN service acts as
+an OpenFlow agent and rule cache, giving administrators fine-grained control
+over which connections the device is allowed to make. Flows are augmented with
+context from the specific device and application, and can be elevated to the
+organization's SDN controller along with UI context data if necessary.
 
 % Benefit over cost
 
-Our application provides organizations with a new set of powerful, easy to use
+Our application provides organizations with a new set of powerful, easy-to-use
 tools for monitoring BYOD Android smartphones in a simple app package that is
 easy for users to install. It does not require rooting, recompiling the kernel,
 or any other cumbersome processes. It can distinguish between user-generated and
 automated network requests with a high degree of confidence using techniques
 that are difficult for malware to evade. This makes users safer by detecting
-stealthy malware on their devices, and improves the organizations network
+stealthy malware on their devices and improves the organization's network
 security.
 
 The costs of our system include the resource overhead of running the app (CPU
-cycles, battery power, etc.) and the cost of installing, running, and
+cycles, battery power, etc.) and the expense of installing, running, and
 maintaining the controller server. We found these costs to be a relatively
 small addition to existing resources. The app's UI monitoring and VPN service
 also add some latency to network requests performed on the phone. In our
-experiments \textsc{Appjudicator} added less than 10 milliseconds of total
-latency to 95\% packets processed by the app.
+experiments, \textsc{Appjudicator} added less than 14 milliseconds of total
+latency to 95\% of packets processed by the app.
 
 % Competition
 
-Using UI data to distinguish user-initiated behavior and the use of a smartphone
-as an SDN agent have been studied by others before, but \textsc{Appjudicator}
-combines these aspects in new and important ways. Android host-based SDN agets
-have been investigated by Hanguard~\cite{demetriou2017}, and using UI
-interaction as context for identifying malicious app behavior was examined in
+Using UI data to distinguish user-initiated behavior and using a smartphone as
+an SDN agent have previously been studied, but \textsc{Appjudicator} combines
+these aspects in new and important ways. Android host-based SDN agets have been
+investigated by Hanguard~\cite{demetriou2017}, and using UI interaction as
+context for identifying malicious app behavior was examined in
 AppIntent~\cite{yang2013}, but our system combines these approaches to form a
 novel solution for a distinct use case. One key difference is that AppIntent
 uses machine learning to conduct static analysis of apps, while
@@ -95,43 +95,43 @@ Kwon~\etal have proposed a system that uses UI data to distinguish
 user-generated network flows, and the combination of UI monitoring and SDN has
 been implemented on Microsoft Windows by Harbinger~\cite{chuluundorj2019}.  We
 solve new challenges by implementing this strategy on the Android platform. For
-example, we are constrained by Android's rigid permissions system, we do not
-have root access to the device, and we cannot modify the kernel. These
+example, since we are constrained by Android's rigid permissions system, we do
+not have root access to the device and cannot modify the kernel. These
 restrictions require novel techniques and systems.
 
 This work focuses on implementing a proof of concept networking tool for
 Android. We explore the following research question:
 \begin{quote}
-	\textit{Can UI interaction and network activity be used to successfully
+	\textit{Can UI interaction and network activity successfully be used to 
 		predict and associate network flows with user actions on Android devices
 		with acceptable overhead?}
 \end{quote}
 We leave the potential applications of this data for network security to future
 work, instead examining the effectiveness of our strategy for differentiating
-user-initiated flows and the system's CPU, memory, and energy costs.
+user-initiated flows and measuring the system's CPU, memory, and energy costs.
 
-To investigate we perform a study with several real apps to determine whether
-\textsc{Appjudicator} can successfully detect user-initiated network
-requests. We found that even with a simple timing-based strategy the app could
+To investigate, we perform a study with several real apps to determine whether
+\textsc{Appjudicator} can successfully detect user-initiated network requests.
+We found that even with a simple timing-based strategy the app could
 successfully associate network flows with the UI interaction that initiated
 them. We also measure the total added latency of the VPN and SDN agent, finding
 that our system adds less than 14 milliseconds of total end-to-end latency to
-95\% of intercepted packets. On a standard 60 Hz screen this latency is
+95\% of intercepted packets. On a standard 60 Hz screen, this latency is
 imperceptible to users.
 
 In summary, this paper makes the following contributions:
 
 \begin{itemize}
 	\item We propose a novel system for associating network flows with user
-		interface context on Android. Unlike existing solutions our application
-		does not require root access to the device implements a host-based SDN
-		agent.
+		interface context on Android. Unlike existing solutions, our application
+		implements a host-based SDN agent and does not require root access to
+		the device.
 	\item We design and implement a practical prototype of the system on
 		Android, called \textsc{Appjudicator}, which integrates with other SDN
 		infrastructure using a subset of the OpenFlow protocol.
 	\item We evaluate the performance and efficacy of \textsc{Appjudicator} on
 		real and virtual Android devices with real-world apps. The results show
-		that this prototype has a low impact on CPU, memory, and battery, usage,
+		that this prototype has a low impact on CPU, memory, and battery usage,
 		and adds a minimal amount of total latency to network communications
 		while achieving its goal of differentiating user-initiated flows and
 		associating flows with UI context.
